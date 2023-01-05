@@ -2,6 +2,19 @@
 def clean_tabular_data(dataframe):
 
     def remove_rows_with_missing_ratings(dataframe):
+        '''
+        Removes the rows with missing values in the columns specified
+
+        Parameters
+        ----------
+        dataframe: pandas.core.frame.DataFrame
+
+        Returns
+        -------
+        dataframe: pandas.core.frame.DataFrame
+            A pandas DataFrame without the rows with missing values
+        
+        '''
         dataframe = dataframe.dropna(subset=['Cleanliness_rating',
         'Accuracy_rating', 'Communication_rating', 'Location_rating',
         'Check-in_rating', 'Value_rating'])
@@ -9,44 +22,51 @@ def clean_tabular_data(dataframe):
         return dataframe
 
     def combine_description_strings(dataframe):
-        for i in range(len(dataframe['Description'])):
+        '''
+        Combines the list of strings from the Description Column into a single string for each row
 
-            if type(dataframe['Description'][i]) == str:
-                string = dataframe['Description'][i].strip('][').split(', ')
-                newstring = ''
+        Parameters
+        ----------
+        dataframe: pandas.core.frame.DataFrame
 
-                for j in range(len(string)):
-                    output = string[j].replace("'","")
-                    output = output.replace(" l "," l'")
-                    output = output.replace(" d "," d'")
-                    output = output.replace("\\n\\n","")
-                    output = output.replace("\\n",".")
-                    output = output.replace("..",".")
-                    if output == 'About this space':
-                        newstring = newstring
-                        continue
-                    elif output == '"The space':
-                        newstring = newstring
-                        continue
-                    elif output == 'Guest access':
-                        newstring = newstring
-                        continue
-                    elif output == 'Sanitary Facilities':
-                        newstring = newstring
-                        continue
-                    elif output == 'Other things to note':
-                        newstring = newstring
-                        continue
-                    elif j > 0:
-                        newstring = newstring + output
+        Returns
+        -------
+        dataframe: pandas.core.frame.DataFrame
+            A pandas DataFrame with a single string in the Description column
+        '''
 
-                dataframe['Description'][i] = newstring
-        
-        dataframe['Description'].astype(str).str[0].replace("\"","") # Not Working
+        dataframe['Description'] = dataframe['Description'].astype(str)
+        dataframe['Description'] = dataframe['Description'].str.replace('About this space', '')
+        dataframe['Description'] = dataframe['Description'].str.replace("'", '')
+        dataframe['Description'] = dataframe['Description'].apply(lambda x: x.strip())
+        dataframe['Description'] = dataframe['Description'].str.split(",")
+        dataframe['Description'] = dataframe['Description'].apply(lambda x: [i for i in x if i != ''])
+        dataframe['Description'] = dataframe['Description'].apply(lambda x: ''.join(x)).astype(str)
+        dataframe['Description'] = dataframe['Description'].str.replace("'", '')
+        dataframe['Description'] = dataframe['Description'].str.replace("The space The space\\\\n", 'The space: ')
+        dataframe['Description'] = dataframe['Description'].str.replace("Guest access", 'Guest access: ')
+        dataframe['Description'] = dataframe['Description'].str.replace("Sanitary facilities", 'Sanitary Facilities: ')
+        dataframe['Description'] = dataframe['Description'].str.replace("Other things to note\\\\n", 'Other things to note: ')
+        dataframe['Description'] = dataframe['Description'].str.replace("\\\\n\\\\n", '. ')
+        dataframe['Description'] = dataframe['Description'].str.replace("\\\\n", ' ')
+        dataframe['Description'] = dataframe['Description'].str.replace("\.\.", '.')
+
 
         return dataframe
 
     def set_default_feature_values(dataframe):
+        '''
+        Replaces the empty values of certain coulumns with the number one
+
+        Parameters
+        ----------
+        dataframe: pandas.core.frame.DataFrame
+
+        Returns
+        -------
+        dataframe: pandas.core.frame.DataFrame
+            A pandas DataFrame no empty "guests", "beds", "bathrooms", and "bedrooms" entries
+        '''
         dataframe[['guests', 'beds','bathrooms', 'bedrooms']] = dataframe[['guests', 'beds','bathrooms', 'bedrooms']].fillna(value=1)
 
         return dataframe
@@ -80,4 +100,3 @@ if __name__ == "__main__":
     df.to_csv(clean_tabular_data_directory)
 
 # %%
-    
