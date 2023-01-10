@@ -1,10 +1,5 @@
 # %%
-def clean_tabular_data():
-    # Load the raw data using pandas
-    current_directory = os.getcwd()
-    csv_relative_directory = 'airbnb-property-listings/tabular_data/listing.csv'
-    csv_directory = os.path.join(current_directory, csv_relative_directory)
-    dataframe = pd.read_csv(csv_directory)
+def clean_tabular_data(dataframe):
 
     def remove_rows_with_missing_ratings(dataframe):
         '''
@@ -114,11 +109,16 @@ import os
 
 if __name__ == "__main__":
 
+    # Load the raw data using pandas
+    current_directory = os.getcwd()
+    csv_relative_directory = 'airbnb-property-listings/tabular_data/listing.csv'
+    csv_directory = os.path.join(current_directory, csv_relative_directory)
+    df = pd.read_csv(csv_directory)
+
     # Call clean_tabular_data to process the dataframe
-    df = clean_tabular_data()
+    df = clean_tabular_data(df)
 
     # Save the processed data as clean_tabular_data.csv in the same folder as the raw tabular data.
-    current_directory = os.getcwd()
     df_realtive_directory = 'airbnb-property-listings/tabular_data/clean_tabular_data.csv'
     clean_tabular_data_directory = os.path.join(current_directory,df_realtive_directory)
     df.to_csv(clean_tabular_data_directory)

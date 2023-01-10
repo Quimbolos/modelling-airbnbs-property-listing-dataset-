@@ -63,7 +63,7 @@ def process_images():
             with Image.open(checked_file) as im:
                 min_height = min(min_height, im.height)
 
-        # Create processed_images folder
+        # Create the processed_images folder
         processed_images_path = os.path.join(os.getcwd(),"processed_images")
         if os.path.exists(processed_images_path) == False:
             os.makedirs(processed_images_path)
