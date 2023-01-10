@@ -99,7 +99,7 @@ def set_default_feature_values(dataframe):
 
 ```
 
-- Finally, all the code that does this processing is included in a function called ```clean_tabular_data```, which takes in the raw dataframe, calls these functions sequentially on the output of the previous one, and returns the processed data.
+- All the code that does this processing is included in a function called ```clean_tabular_data```, which takes in the raw dataframe, calls these functions sequentially on the output of the previous one, and returns the processed data.
 
 ```python
 def clean_tabular_data():
