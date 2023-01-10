@@ -238,3 +238,24 @@ if __name__ == "__main__":
     process_images()
 
 ```
+
+In Task 3, within the ```tabular_data.py``` file, a function called ```load_airbnb``` is created:
+
+- This function returns the features and labels of your data in a tuple like (features, labels). The features are the variables that will allow us to predict the labels/target. In this case, the target to predict is the Price per Night. And all the other variables are the features from which we will try to predict the price per night. Text or image format features are not included yet; for now, only numerical tabular data.
+
+```python
+def load_airbnb():
+    
+    current_directory = os.getcwd()
+    csv_relative_directory = 'airbnb-property-listings/tabular_data/clean_tabular_data.csv'
+    csv_directory = os.path.join(current_directory, csv_relative_directory)
+    df = pd.read_csv(csv_directory)
+    labels = df['Price_Night']
+    features = df.drop(['ID','Category','Title','Description','Amenities','Location','Price_Night','url','Unnamed: 0'], axis=1)
+    
+    return features, labels
+
+```
+
+## Milestone 4: Create a regression model
+> Some Machine Learning models are created and evaluated. These models predict the price of the listing per night.
