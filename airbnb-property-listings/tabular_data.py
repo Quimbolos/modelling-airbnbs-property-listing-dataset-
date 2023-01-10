@@ -18,6 +18,7 @@ def clean_tabular_data(dataframe):
         dataframe = dataframe.dropna(subset=['Cleanliness_rating',
         'Accuracy_rating', 'Communication_rating', 'Location_rating',
         'Check-in_rating', 'Value_rating'])
+        dataframe.drop(['Unnamed: 19'], axis=1, inplace = True)
 
         return dataframe
 
@@ -78,6 +79,29 @@ def clean_tabular_data(dataframe):
 
     return dataframe 
 
+def load_airbnb():
+    '''
+    Returns the features and labels from the clean tabular data in a tuple. It only includes numerical tabular data.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    features, labels: tuple
+        A tuple containing all the numerical features for the ML model and the target to predict (Price for the Night)
+    '''
+    
+    current_directory = os.getcwd()
+    csv_relative_directory = 'airbnb-property-listings/tabular_data/clean_tabular_data.csv'
+    csv_directory = os.path.join(current_directory, csv_relative_directory)
+    df = pd.read_csv(csv_directory)
+    labels = df['Price_Night']
+    features = df.drop(['ID','Category','Title','Description','Amenities','Location','Price_Night','url','Unnamed: 0'], axis=1)
+    
+    return features, labels
+
 
 import pandas as pd
 import os
@@ -98,5 +122,9 @@ if __name__ == "__main__":
     df_realtive_directory = 'airbnb-property-listings/tabular_data/clean_tabular_data.csv'
     clean_tabular_data_directory = os.path.join(current_directory,df_realtive_directory)
     df.to_csv(clean_tabular_data_directory)
-
+    
+    # Run the load_airbnb function
+    features, labels = load_airbnb()
 # %%
+
+
