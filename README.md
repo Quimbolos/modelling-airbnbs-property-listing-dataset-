@@ -1,4 +1,4 @@
-# Modelling Airbnb's property listing dataset - Alex
+# Modelling Airbnb's property listing dataset 
 
 > This project builds a framework to systematically train, tune, and evaluate models on several tasks that are tackled by the Airbnb team.
 
