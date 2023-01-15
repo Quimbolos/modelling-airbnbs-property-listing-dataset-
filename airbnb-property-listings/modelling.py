@@ -18,20 +18,20 @@ def custom_tune_regression_model_hyperparameters(models, X_train, X_validation, 
     model_val = []
 
     # For each model, select the model class and the hyperparameters dictionary
-    # for i in range(len(models)):
-    model = models[0]
-    hyperparameters_dict = hyperparameters_dict[0]
+    for i in range(len(models)):
+        model = models[i]
+        hyperparameters_dict_ = hyperparameters_dict[i]
 
-    # For each hyperparameter combination, create a model, and store it´s metrics and hyperparameters
-    for hyperparameters in itertools.product(*hyperparameters_dict.values()):
-        hyperparameters_ = dict(zip(hyperparameters_dict.keys(),hyperparameters))
-        regression_model = model(**hyperparameters_)
-        model_ = regression_model.fit(X_train, y_train)
-        y_pred = model_.predict(X_validation)
-        validation_RMSE.append(metrics.mean_squared_error(y_validation, y_pred, squared=False))
-        validation_R2.append(metrics.r2_score(y_validation, y_pred))
-        model_hyperparameters_val.append(hyperparameters_)
-        model_val.append(regression_model)
+        # For each hyperparameter combination, create a model, and store it´s metrics and hyperparameters
+        for hyperparameters in itertools.product(*hyperparameters_dict_.values()):
+            hyperparameters_ = dict(zip(hyperparameters_dict_.keys(),hyperparameters))
+            regression_model = model(**hyperparameters_)
+            model_ = regression_model.fit(X_train, y_train)
+            y_pred = model_.predict(X_validation)
+            validation_RMSE.append(metrics.mean_squared_error(y_validation, y_pred, squared=False))
+            validation_R2.append(metrics.r2_score(y_validation, y_pred))
+            model_hyperparameters_val.append(hyperparameters_)
+            model_val.append(regression_model)
 
     # Select the model with the best RMSE
     index = np.argmin(validation_RMSE)
@@ -138,5 +138,5 @@ hyperparameters_dict = [{
 
 custom_tune_regression_model_hyperparameters(models, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict)
     
-# %%
 
+# %%
