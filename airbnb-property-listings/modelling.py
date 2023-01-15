@@ -7,6 +7,51 @@ from sklearn import linear_model
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
+import itertools
+
+def custom_tune_regression_model_hyperparameters(models, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict):
+    
+    # Lists to store metrics, chosen Hypermarameters and the model for each iteration
+    validation_RMSE = []
+    validation_R2 = []
+    model_hyperparameters_val = [] 
+    model_val = []
+
+    # For each model, select the model class and the hyperparameters dictionary
+    # for i in range(len(models)):
+    model = models[0]
+    hyperparameters_dict = hyperparameters_dict[0]
+
+    # For each hyperparameter combination, create a model, and store it´s metrics and hyperparameters
+    for hyperparameters in itertools.product(*hyperparameters_dict.values()):
+        hyperparameters_ = dict(zip(hyperparameters_dict.keys(),hyperparameters))
+        regression_model = model(**hyperparameters_)
+        model_ = regression_model.fit(X_train, y_train)
+        y_pred = model_.predict(X_validation)
+        validation_RMSE.append(metrics.mean_squared_error(y_validation, y_pred, squared=False))
+        validation_R2.append(metrics.r2_score(y_validation, y_pred))
+        model_hyperparameters_val.append(hyperparameters_)
+        model_val.append(regression_model)
+
+    # Select the model with the best RMSE
+    index = np.argmin(validation_RMSE)
+    best_model = model_val[index]
+    best_hyperparameters_dict = model_hyperparameters_val[index]
+
+    # Train the best model
+    best_regression_model = best_model.fit(X_train, y_train)
+    y_pred_test= best_regression_model.predict(X_test)
+
+    # Obtain the metrics
+    test_RMSE = metrics.mean_squared_error(y_test, y_pred_test, squared=False)
+    test_R2 = metrics.r2_score(y_test, y_pred_test)
+
+    best_metrics_dict = {
+        'RMSE' : test_RMSE,
+        'R^2' : test_R2
+    }
+
+    return best_regression_model, best_hyperparameters_dict, best_metrics_dict
 
 X, y = load_airbnb()
 
@@ -25,13 +70,11 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 X_test, X_validation, y_test, y_validation = train_test_split(X_test, y_test, test_size=0.5)
 
 linear_regression_model_SDGRegr = SGDRegressor()
-
 linear_regression_model = linear_model.LinearRegression()
 
 model = linear_regression_model_SDGRegr.fit(X_train, y_train)
 
 y_pred = model.predict(X_test)
-
 y_pred_train = model.predict(X_train)
 
 print("Number of samples in:")
@@ -76,9 +119,24 @@ print("R^2: ")
 print(metrics.r2_score(y_train, y_pred_train))
 
 # %%
-y_pred[0:5]
+models = [SGDRegressor, linear_model.LinearRegression]
 
-# %%
-y_test.head(5)
+hyperparameters_dict = [{
 
+    'loss':['squared_error','huber', 'squared_epsilon_insensitive'],
+    'penalty' : ['l2', 'l1', 'elasticnet', 'None'],
+    'alpha' :[0.0001, 0.001]
+
+},
+                        {
+    'fit_intercept':[True, False],
+    'copy_X':[True, False],
+    'n_jobs':[None],
+    'positive':[True, False]
+
+}]
+
+custom_tune_regression_model_hyperparameters(models, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict)
+    
 # %%
+
