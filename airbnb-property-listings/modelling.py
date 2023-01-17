@@ -5,9 +5,39 @@ import pandas as pd
 from sklearn.linear_model import SGDRegressor
 from sklearn import linear_model
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 import itertools
+
+def import_and_standardize_data():
+
+    X, y = load_airbnb()
+
+    X.drop(532, axis=0, inplace=True)
+    y.drop(532, axis=0, inplace=True)
+
+    X['guests'] = X['guests'].str.replace('\'','').astype(np.float64)
+    X['bedrooms'] = X['bedrooms'].str.replace('\'','').astype(np.float64)
+
+    std = StandardScaler()
+    X = std.fit_transform(X)
+
+    return X, y
+
+def split_data(X, y):
+
+    np.random.seed(10)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=12)
+    X_test, X_validation, y_test, y_validation = train_test_split(X_test, y_test, test_size=0.5)
+
+    print("Number of samples in:")
+    print(f" - Training: {len(y_train)}")
+    print(f" - Validation: {len(y_validation)}")
+    print(f" - Testing: {len(y_test)}")
+
+    return X_train, X_validation, X_test, y_train, y_validation, y_test
 
 def custom_tune_regression_model_hyperparameters(models, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict):
     
@@ -53,73 +83,31 @@ def custom_tune_regression_model_hyperparameters(models, X_train, X_validation, 
 
     return best_regression_model, best_hyperparameters_dict, best_metrics_dict
 
-X, y = load_airbnb()
 
-X.drop(532, axis=0, inplace=True)
-y.drop(532, axis=0, inplace=True)
+def tune_regression_model_hyperparameters(models, X, y, hyperparameters_dict):
 
-np.random.seed(10)
+    best_regression_model = None
+    best_hyperparameters_dict = {}
+    best_metrics_dict = {}
+    
+    
+    for i in range(len(models)):
+        model = models[i]
+        hyperparameters = hyperparameters_dict[i]
+        grid_search = GridSearchCV(model, hyperparameters, cv=5, scoring='neg_mean_squared_error')
+        grid_search.fit(X, y)
+        best_hyperparameters_dict[model] = grid_search.best_params_
+        best_metrics_dict[model] = grid_search.best_score_
+        if best_regression_model is None or best_metrics_dict[model] > best_metrics_dict[best_regression_model]:
+            best_regression_model = model
 
-X['guests'] = X['guests'].str.replace('\'','').astype(np.float64)
-X['bedrooms'] = X['bedrooms'].str.replace('\'','').astype(np.float64)
-
-std = StandardScaler()
-X = std.fit_transform(X)
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=12)
-X_test, X_validation, y_test, y_validation = train_test_split(X_test, y_test, test_size=0.5)
-
-linear_regression_model_SDGRegr = SGDRegressor()
-linear_regression_model = linear_model.LinearRegression()
-
-model = linear_regression_model_SDGRegr.fit(X_train, y_train)
-
-y_pred = model.predict(X_test)
-y_pred_train = model.predict(X_train)
-
-print("Number of samples in:")
-print(f" - Training: {len(y_train)}")
-print(f" - Validation: {len(y_validation)}")
-print(f" - Testing: {len(y_test)}")
-
-print(" ")
-
-print('final weights:', model.coef_)
-print('final bias:', model.intercept_)
-
-print(" ")
-print("Testing Metrics")
-
-print("MSE: ")
-print(metrics.mean_squared_error(y_test, y_pred))
-
-print("RMSE: ")
-print(metrics.mean_squared_error(y_test, y_pred, squared=False))
-
-print("MAE: ")
-print(metrics.mean_absolute_error(y_test, y_pred))
-
-print("R^2: ")
-print(metrics.r2_score(y_test, y_pred))
+    return best_regression_model, best_hyperparameters_dict, best_metrics_dict
 
 
-print(" ")
-print("Training Metrics")
 
-print("MSE: ")
-print(metrics.mean_squared_error(y_train, y_pred_train))
-
-print("RMSE: ")
-print(metrics.mean_squared_error(y_train, y_pred_train, squared=False))
-
-print("MAE: ")
-print(metrics.mean_absolute_error(y_train, y_pred_train))
-
-print("R^2: ")
-print(metrics.r2_score(y_train, y_pred_train))
-
-# %%
 models = [SGDRegressor, linear_model.LinearRegression]
+
+models2 = [SGDRegressor(), linear_model.LinearRegression()]
 
 hyperparameters_dict = [{
 
@@ -136,7 +124,28 @@ hyperparameters_dict = [{
 
 }]
 
-custom_tune_regression_model_hyperparameters(models, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict)
-    
+if __name__ == "__main__":
+
+    # Import and standardize data
+    X, y = import_and_standardize_data()
+
+    # Split Data
+    X_train, X_validation, X_test, y_train, y_validation, y_test = split_data(X, y)
+
+    # Tune models hyperparameters
+    best_regression_model_custom, best_hyperparameters_dict_custom, best_metrics_dict_custom = custom_tune_regression_model_hyperparameters(models, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict)
+
+    # Tune models hyperparameters using GirdSearchCV
+    best_regression_model, best_hyperparameters_dict, best_metrics_dict = tune_regression_model_hyperparameters(models2, X, y, hyperparameters_dict)
+
+    # Print Results
+    print(best_regression_model_custom, best_hyperparameters_dict_custom, best_metrics_dict_custom)
+    print(best_regression_model, best_hyperparameters_dict, best_metrics_dict)
+
+
+
+
+
+# %%
 
 # %%
