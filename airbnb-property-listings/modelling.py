@@ -9,6 +9,9 @@ from sklearn.model_selection import GridSearchCV
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 import itertools
+import os
+import joblib
+import json
 
 def import_and_standardize_data():
 
@@ -100,9 +103,47 @@ def tune_regression_model_hyperparameters(models, X, y, hyperparameters_dict):
         best_metrics_dict[model] = grid_search.best_score_
         if best_regression_model is None or best_metrics_dict[model] > best_metrics_dict[best_regression_model]:
             best_regression_model = model
+            best_metrics = best_metrics_dict[model]
+            best_hyperparameters = best_hyperparameters_dict[model]
 
-    return best_regression_model, best_hyperparameters_dict, best_metrics_dict
+    return best_regression_model, best_hyperparameters, best_metrics
 
+def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
+
+    # Create Models folder
+    models_dir = 'airbnb-property-listings/models'
+    current_dir = os.path.dirname(os.getcwd())
+    models_path = os.path.join(current_dir, models_dir)
+    if os.path.exists(models_path) == False:
+        os.mkdir(models_path)
+
+    # Create regression folder
+    regression_dir = 'airbnb-property-listings/models/regression'
+    current_dir = os.path.dirname(os.getcwd())
+    regression_path = os.path.join(current_dir, regression_dir)
+    if os.path.exists(regression_path) == False:
+        os.mkdir(regression_path)
+
+    # Create linear_regression folder
+    folder_name_dir = os.path.join(regression_path,folder_name)
+    current_dir = os.path.dirname(os.getcwd())
+    folder_name_path = os.path.join(current_dir, folder_name_dir)
+    if os.path.exists(folder_name_path) == False:
+        os.mkdir(folder_name_path)
+
+    # Save the model in a file called model.joblib
+    joblib.dump(best_model, os.path.join(folder_name_path, 'model.joblib'))
+   
+    # Save the hyperparameters in a file called hyperparameters.json
+    with open(os.path.join(folder_name_path, 'hyperparameters.json'), 'w') as fp:
+            json.dump(best_hyperparameters, fp)
+
+    # Save the metrics in a file called metrics.json
+    with open(os.path.join(folder_name_path, 'metrics.json'), 'w') as fp:
+            json.dump(best_metrics, fp)
+
+
+    return
 
 
 models = [SGDRegressor, linear_model.LinearRegression]
@@ -142,10 +183,10 @@ if __name__ == "__main__":
     print(best_regression_model_custom, best_hyperparameters_dict_custom, best_metrics_dict_custom)
     print(best_regression_model, best_hyperparameters_dict, best_metrics_dict)
 
+    # Save the model
+    folder_name='linear_regression'
+    save_model(folder_name, best_regression_model, best_hyperparameters_dict, best_metrics_dict)
 
 
-
-
-# %%
 
 # %%
