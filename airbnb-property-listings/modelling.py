@@ -3,6 +3,9 @@ from tabular_data import load_airbnb
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import SGDRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn import linear_model
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
@@ -10,7 +13,8 @@ from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 import itertools
 import os
-import joblib
+import joblib 
+from joblib import dump, load
 import json
 
 def import_and_standardize_data():
@@ -44,6 +48,8 @@ def split_data(X, y):
 
 def custom_tune_regression_model_hyperparameters(models, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict):
     
+    # Models input format : models = [SGDRegressor, linear_model.LinearRegression]
+
     # Lists to store metrics, chosen Hypermarameters and the model for each iteration
     validation_RMSE = []
     validation_R2 = []
@@ -87,24 +93,33 @@ def custom_tune_regression_model_hyperparameters(models, X_train, X_validation, 
     return best_regression_model, best_hyperparameters_dict, best_metrics_dict
 
 
-def tune_regression_model_hyperparameters(models, X, y, hyperparameters_dict):
+def tune_regression_model_hyperparameters(model, X, y, X_test, y_test, hyperparameters_dict):
 
     best_regression_model = None
     best_hyperparameters_dict = {}
     best_metrics_dict = {}
     
     
-    for i in range(len(models)):
-        model = models[i]
-        hyperparameters = hyperparameters_dict[i]
-        grid_search = GridSearchCV(model, hyperparameters, cv=5, scoring='neg_mean_squared_error')
-        grid_search.fit(X, y)
-        best_hyperparameters_dict[model] = grid_search.best_params_
-        best_metrics_dict[model] = grid_search.best_score_
-        if best_regression_model is None or best_metrics_dict[model] > best_metrics_dict[best_regression_model]:
-            best_regression_model = model
-            best_metrics = best_metrics_dict[model]
-            best_hyperparameters = best_hyperparameters_dict[model]
+    model = model
+    hyperparameters = hyperparameters_dict
+    grid_search = GridSearchCV(model, hyperparameters, cv=5, scoring='neg_mean_squared_error')
+    grid_search.fit(X, y)
+    best_hyperparameters_dict[model] = grid_search.best_params_
+    best_metrics_dict[model] = grid_search.best_score_
+    if best_regression_model is None or best_metrics_dict[model] > best_metrics_dict[best_regression_model]:
+        best_regression_model = model
+        best_hyperparameters = best_hyperparameters_dict[model]
+
+    
+    model = best_regression_model.fit(X,y)
+    y_pred = model.predict(X_test)
+
+    test_RMSE = (metrics.mean_squared_error(y_test, y_pred, squared=False))
+    test_R2 = (metrics.r2_score(y_test, y_pred))
+    best_metrics = {
+    'RMSE' : test_RMSE,
+    'R^2' : test_R2
+    } 
 
     return best_regression_model, best_hyperparameters, best_metrics
 
@@ -145,27 +160,7 @@ def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
 
     return
 
-
-models = [SGDRegressor, linear_model.LinearRegression]
-
-models2 = [SGDRegressor(), linear_model.LinearRegression()]
-
-hyperparameters_dict = [{
-
-    'loss':['squared_error','huber', 'squared_epsilon_insensitive'],
-    'penalty' : ['l2', 'l1', 'elasticnet', 'None'],
-    'alpha' :[0.0001, 0.001]
-
-},
-                        {
-    'fit_intercept':[True, False],
-    'copy_X':[True, False],
-    'n_jobs':[None],
-    'positive':[True, False]
-
-}]
-
-if __name__ == "__main__":
+def evaluate_all_models(models,hyperparameters_dict):
 
     # Import and standardize data
     X, y = import_and_standardize_data()
@@ -173,20 +168,101 @@ if __name__ == "__main__":
     # Split Data
     X_train, X_validation, X_test, y_train, y_validation, y_test = split_data(X, y)
 
-    # Tune models hyperparameters
-    best_regression_model_custom, best_hyperparameters_dict_custom, best_metrics_dict_custom = custom_tune_regression_model_hyperparameters(models, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict)
-
     # Tune models hyperparameters using GirdSearchCV
-    best_regression_model, best_hyperparameters_dict, best_metrics_dict = tune_regression_model_hyperparameters(models2, X, y, hyperparameters_dict)
+    for i in range(len(models)):
 
-    # Print Results
-    print(best_regression_model_custom, best_hyperparameters_dict_custom, best_metrics_dict_custom)
-    print(best_regression_model, best_hyperparameters_dict, best_metrics_dict)
+        best_regression_model, best_hyperparameters_dict, best_metrics_dict = tune_regression_model_hyperparameters(models[i], X, y, X_test, y_test, hyperparameters_dict[i])
 
-    # Save the model
-    folder_name='linear_regression'
-    save_model(folder_name, best_regression_model, best_hyperparameters_dict, best_metrics_dict)
+        # Print Results
+        print(best_regression_model, best_hyperparameters_dict, best_metrics_dict)
+
+        # Save the models in their correponding folders
+        folder_name= str(models[i])[0:-2]
+        save_model(folder_name, best_regression_model, best_hyperparameters_dict, best_metrics_dict)
+
+    return
+
+def find_best_model(models):
+
+    # Find best metrics (best R^2 == highest score) within the libraries 
+    r_squared = []
+    best_regression_model = None
+    best_hyperparameters_dict = {}
+    best_metrics_dict = {}
+
+    regression_dir = 'airbnb-property-listings/models/regression'
+    current_dir = os.path.dirname(os.getcwd())
+    regression_path = os.path.join(current_dir, regression_dir)
+    
+    for i in range(len(models)):
+        model_str = str(models[i])[0:-2]
+        model_dir = os.path.join(regression_path, model_str)
+        model = load(os.path.join(model_dir, 'model.joblib'))
+        hyperparameters_path = open(os.path.join(model_dir, 'hyperparameters.json'))
+        hyperparameters = json.load(hyperparameters_path)
+        metrics_path = open(os.path.join(model_dir, 'metrics.json'))
+        metrics = json.load(metrics_path)
+
+        if best_regression_model is None or metrics.get("R^2") > best_metrics_dict.get("R^2"):
+            best_regression_model = model
+            best_hyperparameters_dict = hyperparameters
+            best_metrics_dict = metrics
+
+    return best_regression_model, best_hyperparameters_dict, best_metrics_dict
 
 
+
+models = [SGDRegressor(), DecisionTreeRegressor(), RandomForestRegressor(), GradientBoostingRegressor()]
+
+
+hyperparameters_dict = [{ # SGDRegressor Hyperparameters (Selection)
+
+    'loss':['squared_error','huber', 'squared_epsilon_insensitive'],
+    'penalty':['l2', 'l1', 'elasticnet', 'None'],
+    'alpha':[0.0001, 0.001],
+    'l1_ratio':[0.15, 0.2],
+    'fit_intercept':[True, False],
+    'max_iter' :[1000],
+    'shuffle' :[True, False],
+    'early_stopping':[True, False]
+
+},
+                        { # DecisionTreeRegressor Hyperparameters (Selection)
+    'criterion':['squared_error', 'friedman_mse', 'absolute_error', 'poisson'],
+    'splitter':['best', 'random'],
+    'max_features':['auto', 'sqrt', 'log2' , None]
+
+},
+                        { # RandomForestRegressor Hyperparameters (Selection)
+    'n_estimators':[50, 100,],
+    'criterion':['squared_error', 'friedman_mse', 'absolute_error', 'poisson'],
+    'bootstrap':[True, False]
+},
+
+                        { # GradientBoostingRegressor Hyperparameters (Selection)
+    'loss':['squared_error','huber', 'squared_epsilon_insensitive'],
+    'learning_rate':[0.1, 0.2, 0.5],
+    'n_estimators':[50, 100, 200,],
+    'criterion':['squared_error', 'friedman_mse'],
+    'max_features':['auto', 'sqrt', 'log2' , None],
+
+}]
+
+if __name__ == "__main__":
+
+    evaluate_all_models(models, hyperparameters_dict)
+
+    best_regression_model, best_hyperparameters_dict, best_metrics_dict = find_best_model(models)
+
+    
+    print("Best Regression Model:")
+    print(best_regression_model)
+    print("Hyperparameters:")
+    print(best_hyperparameters_dict)
+    print("Metrics:")
+    print(best_metrics_dict)
+
+
+# %%
 
 # %%
