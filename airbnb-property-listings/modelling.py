@@ -18,6 +18,22 @@ from joblib import dump, load
 import json
 
 def import_and_standardize_data():
+    '''
+        Imports the data through the load_airbnb() function and then standardises it
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        X: numpy.ndarray
+            A numpy array containing the features of the model
+
+        y: pandas.core.series.Series
+            A pandas series containing the targets/labels 
+            
+        '''
 
     X, y = load_airbnb()
 
@@ -33,6 +49,26 @@ def import_and_standardize_data():
     return X, y
 
 def split_data(X, y):
+    '''
+        Splits the data into training, validating and testing data
+
+        Parameters
+        ----------
+        X: numpy.ndarray
+            A numpy array containing the features of the model
+
+        y: pandas.core.series.Series
+            A pandas series containing the targets/labels 
+
+        Returns
+        -------
+        X_train, X_validation, X_test: numpy.ndarray
+            A set of numpy arrays containing the features of the model
+
+        y_train, y_validation, y_test: pandas.core.series.Series
+            A set of pandas series containing the targets/labels 
+        
+    '''
 
     np.random.seed(10)
 
@@ -47,7 +83,34 @@ def split_data(X, y):
     return X_train, X_validation, X_test, y_train, y_validation, y_test
 
 def custom_tune_regression_model_hyperparameters(models, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict):
-    
+    '''
+        Returns the best model, its metrics and the best hyperparameters after hyperparameter tunning. The best model is chosen based on the computed validation RMSE.
+
+        Parameters
+        ----------
+        models: abc.ABCMeta
+            A list of models from sklearn in their abc.ABCMeta format
+
+        X_train, X_validation, X_test: numpy.ndarray
+            A set of numpy arrays containing the features of the model
+
+        y_train, y_validation, y_test: pandas.core.series.Series
+            A set of pandas series containing the targets/labels
+        
+        hyperparameters_dict: list
+            A list of dictionaries containing a range of hyperparameters for each model
+
+        Returns
+        -------
+        best_regression_model: sklearn.model
+            A model from sklearn
+        
+        best_hyperparameters_dict: dict
+            A dictionary containing the optimal hyperparameters configuration
+        
+        best_metrics_dict: dict 
+            A dictionary containing the test metrics obtained using the best model         
+    '''
     # Models input format : models = [SGDRegressor, linear_model.LinearRegression]
 
     # Lists to store metrics, chosen Hypermarameters and the model for each iteration
@@ -61,7 +124,7 @@ def custom_tune_regression_model_hyperparameters(models, X_train, X_validation, 
         model = models[i]
         hyperparameters_dict_ = hyperparameters_dict[i]
 
-        # For each hyperparameter combination, create a model, and store it´s metrics and hyperparameters
+        # For each hyperparameter combination, create a model and store its metrics and hyperparameters
         for hyperparameters in itertools.product(*hyperparameters_dict_.values()):
             hyperparameters_ = dict(zip(hyperparameters_dict_.keys(),hyperparameters))
             regression_model = model(**hyperparameters_)
@@ -94,7 +157,40 @@ def custom_tune_regression_model_hyperparameters(models, X_train, X_validation, 
 
 
 def tune_regression_model_hyperparameters(model, X, y, X_test, y_test, hyperparameters_dict):
+    '''
+        Returns the best model, its metrics and the best hyperparameters after hyperparameter tunning. The best model is chosen based on the computed validation RMSE.
 
+        Parameters
+        ----------
+        model: sklearn.model
+            An instance of the sklearn model
+        
+        X: numpy.ndarray
+            A numpy array containing the features of the model
+
+        y: pandas.core.series.Series
+            A pandas series containing the targets/labels
+
+        X_test: numpy.ndarray
+            A numpy array containing the features of the model
+
+        y_test: pandas.core.series.Series
+            A pandas series containing the targets/labels
+        
+        hyperparameters_dict: dict
+            A dictionary containing a range of hyperparameters 
+
+        Returns
+        -------
+        best_regression_model: sklearn.model
+            A model from sklearn
+        
+        best_hyperparameters_dict: dict
+            A dictionary containing the optimal hyperparameters configuration
+        
+        best_metrics_dict: dict 
+            A dictionary containing the test metrics obtained using the best model         
+    '''
     best_regression_model = None
     best_hyperparameters_dict = {}
     best_metrics_dict = {}
@@ -124,6 +220,28 @@ def tune_regression_model_hyperparameters(model, X, y, X_test, y_test, hyperpara
     return best_regression_model, best_hyperparameters, best_metrics
 
 def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
+    '''
+        Creates a models folder, then within the models' folder creates a regression folder and finally creates a last folder-name folder where it stores the model, a dictionary of its hyperparameters and a dictionary of its metrics
+        
+        Parameters
+        ----------
+        folder_name: str
+            A string used to name the folder to be created
+        
+        best_model: sklearn.model
+            A model from sklearn
+        
+        best_hyperparameters: dict
+            A dictionary containing the optimal hyperparameters configuration
+        
+        best_metrics: dict 
+            A dictionary containing the test metrics obtained using the best model   
+
+        Returns
+        -------
+        None
+             
+    '''
 
     # Create Models folder
     models_dir = 'airbnb-property-listings/models'
@@ -160,7 +278,25 @@ def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
 
     return
 
+
 def evaluate_all_models(models,hyperparameters_dict):
+    '''
+        Imports and Standirizes the data, splits the dataset and finds the best-tuned model from the provided sklearn models and a range of its hyperparameters.       
+        Finally, it saves the models, their metrics and their hyperparameters in their corresponding folders.
+        
+        Parameters 
+        ----------
+        models: list
+            A list of models from sklearn 
+        
+        hyperparameters_dict: list
+            A list of dictionaries containing a range of hyperparameters for each model
+
+        Returns
+        -------
+        None
+             
+    '''
 
     # Import and standardize data
     X, y = import_and_standardize_data()
@@ -176,16 +312,35 @@ def evaluate_all_models(models,hyperparameters_dict):
         # Print Results
         print(best_regression_model, best_hyperparameters_dict, best_metrics_dict)
 
-        # Save the models in their correponding folders
+        # Save the models in their corresponding folders
         folder_name= str(models[i])[0:-2]
         save_model(folder_name, best_regression_model, best_hyperparameters_dict, best_metrics_dict)
 
     return
 
 def find_best_model(models):
+    '''
+        Using the metrics.json files produced in the evaluate_all_models(), this function iterates through the files to find the best metrics and output the best model, its hyperparameters and its metrics.
+
+        Parameters 
+        ----------
+        models: list
+            A list of models from sklearn 
+
+        Returns
+        -------
+        best_regression_model: sklearn.model
+            A model from sklearn
+        
+        best_hyperparameters_dict: dict
+            A dictionary containing the optimal hyperparameters configuration
+        
+        best_metrics_dict: dict 
+            A dictionary containing the test metrics obtained using the best model   
+             
+    '''
 
     # Find best metrics (best R^2 == highest score) within the libraries 
-    r_squared = []
     best_regression_model = None
     best_hyperparameters_dict = {}
     best_metrics_dict = {}
@@ -209,7 +364,6 @@ def find_best_model(models):
             best_metrics_dict = metrics
 
     return best_regression_model, best_hyperparameters_dict, best_metrics_dict
-
 
 
 models = [SGDRegressor(), DecisionTreeRegressor(), RandomForestRegressor(), GradientBoostingRegressor()]
@@ -265,4 +419,3 @@ if __name__ == "__main__":
 
 # %%
 
-# %%
