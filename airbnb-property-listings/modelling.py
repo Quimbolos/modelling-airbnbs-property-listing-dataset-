@@ -88,7 +88,7 @@ def custom_tune_regression_model_hyperparameters(models, X_train, X_validation, 
 
         Parameters
         ----------
-        models: abc.ABCMeta
+        models: list
             A list of models from sklearn in their abc.ABCMeta format
 
         X_train, X_validation, X_test: numpy.ndarray
@@ -281,7 +281,7 @@ def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
 
 def evaluate_all_models(models,hyperparameters_dict):
     '''
-        Imports and Standirizes the data, splits the dataset and finds the best-tuned model from the provided sklearn models and a range of its hyperparameters.       
+        Imports and Standardizes the data, splits the dataset and finds the best-tuned model from the provided sklearn models and a range of its hyperparameters.       
         Finally, it saves the models, their metrics and their hyperparameters in their corresponding folders.
         
         Parameters 
