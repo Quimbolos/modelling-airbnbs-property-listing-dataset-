@@ -126,4 +126,6 @@ if __name__ == "__main__":
     # Run the load_airbnb function
     features, labels = load_airbnb()
 # %%
+
+
 # %%
