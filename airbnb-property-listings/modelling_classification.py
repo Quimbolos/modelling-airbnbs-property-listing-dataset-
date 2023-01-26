@@ -318,6 +318,55 @@ def evaluate_all_models(models,hyperparameters_dict):
 
 models = [LogisticRegression(), DecisionTreeClassifier(), RandomForestClassifier(), GradientBoostingClassifier()]
 
+def find_best_model(models):
+    '''
+        Using the metrics.json files produced in the evaluate_all_models(), this function iterates through the files to find the best metrics and output the best model, its hyperparameters and its metrics.
+
+        Parameters 
+        ----------
+        models: list
+            A list of models from sklearn 
+
+        Returns
+        -------
+        best_regression_model: sklearn.model
+            A model from sklearn
+        
+        best_hyperparameters_dict: dict
+            A dictionary containing the optimal hyperparameters configuration
+        
+        best_metrics_dict: dict 
+            A dictionary containing the test metrics obtained using the best model   
+             
+    '''
+
+    # Find best metrics (best F1 == highest score) within the libraries 
+    best_regression_model = None
+    best_hyperparameters_dict = {}
+    best_metrics_dict = {}
+
+    classification_dir = 'airbnb-property-listings/models/classification'
+    current_dir = os.path.dirname(os.getcwd())
+    classification_path = os.path.join(current_dir, classification_dir)
+    
+    for i in range(len(models)):
+        model_str = str(models[i])[0:-2]
+        model_dir = os.path.join(classification_path, model_str)
+        model = load(os.path.join(model_dir, 'model.joblib'))
+        hyperparameters_path = open(os.path.join(model_dir, 'hyperparameters.json'))
+        hyperparameters = json.load(hyperparameters_path)
+        metrics_path = open(os.path.join(model_dir, 'metrics.json'))
+        metrics = json.load(metrics_path)
+
+        if best_regression_model is None or metrics.get("F1 score") > best_metrics_dict.get("F1 score"):
+            best_regression_model = model
+            best_hyperparameters_dict = hyperparameters
+            best_metrics_dict = metrics
+
+    return best_regression_model, best_hyperparameters_dict, best_metrics_dict
+
+
+
 hyperparameters_dict = [{ # LogisticRegression
 
     'C': [1.0],
@@ -400,6 +449,15 @@ hyperparameters_dict = [{ # LogisticRegression
 if __name__ == "__main__":
 
     evaluate_all_models(models,hyperparameters_dict)
+
+    best_regression_model, best_hyperparameters_dict, best_metrics_dict = find_best_model(models)
+
+    print("Best Regression Model:")
+    print(best_regression_model)
+    print("Hyperparameters:")
+    print(best_hyperparameters_dict)
+    print("Metrics:")
+    print(best_metrics_dict)
 
     
 
