@@ -55,7 +55,7 @@ def import_and_standardize_data():
 
         y: pandas.core.series.Series
             A pandas series containing the targets/labels 
-            
+
         '''
 
     X, y = load_airbnb()
@@ -67,7 +67,8 @@ def import_and_standardize_data():
     X['bedrooms'] = X['bedrooms'].str.replace('\'','').astype(np.float64)
 
     std = StandardScaler()
-    X = std.fit_transform(X)
+    scaled_features = std.fit_transform(X.values)
+    X = pd.DataFrame(scaled_features, index=X.index, columns=X.columns)
 
     return X, y
 
@@ -86,22 +87,23 @@ def split_data(X, y):
 
         Returns
         -------
-        X_train, X_validation: numpy.ndarray
+        X_train, X_validation, X_test: numpy.ndarray
             A set of numpy arrays containing the features of the model
 
-        y_train, y_validation: pandas.core.series.Series
+        y_train, y_validation, y_test: pandas.core.series.Series
             A set of pandas series containing the targets/labels 
-        
+
     '''
 
     np.random.seed(10)
 
-    X_train, X_validation, y_train, y_validation = train_test_split(X, y, test_size=0.3, random_state=12)
+    X_train, X_test, y_train, y_validation = train_test_split(X, y, test_size=0.3, random_state=12)
+    X_test, X_validation, y_test, y_validation = train_test_split(X_test, y_validation, test_size=0.5)
 
-    return X_train, X_validation, y_train, y_validation
+    return X_train, X_validation, X_test, y_train, y_validation, y_test
 
 
-def obtain_metrics(y_pred_train, y_train, y_pred_test, y_test):
+def obtain_metrics(y_pred_train, y_train, y_pred_validation, y_validation):
 
     # Training
     print("Training")
@@ -119,20 +121,19 @@ def obtain_metrics(y_pred_train, y_train, y_pred_test, y_test):
 
     # Testing
     print("Testing")
-    print("F1 score:", f1_score(y_test, y_pred_test, average="macro"))
-    print("Precision:", precision_score(y_test, y_pred_test, average="macro"))
-    print("Recall:", recall_score(y_test, y_pred_test, average="macro"))
-    print("Accuracy:", accuracy_score(y_test, y_pred_test))
+    print("F1 score:", f1_score(y_validation, y_pred_validation, average="macro"))
+    print("Precision:", precision_score(y_validation, y_pred_validation, average="macro"))
+    print("Recall:", recall_score(y_validation, y_pred_validation, average="macro"))
+    print("Accuracy:", accuracy_score(y_validation, y_pred_validation))
 
     test_metrics = {
-        "F1 score" : f1_score(y_test, y_pred_test, average="macro"),
-        "Precision":  precision_score(y_test, y_pred_test, average="macro"),
-        "Recall" :  recall_score(y_test, y_pred_test, average="macro"),
-        "Accuracy" :  accuracy_score(y_test, y_pred_test)
+        "F1 score" : f1_score(y_validation, y_pred_validation, average="macro"),
+        "Precision":  precision_score(y_validation, y_pred_validation, average="macro"),
+        "Recall" :  recall_score(y_validation, y_pred_validation, average="macro"),
+        "Accuracy" :  accuracy_score(y_validation, y_pred_validation)
     }
 
     return test_metrics, train_metrics
-
 
 
 def classification_matrix(labels, predictions, clf):
@@ -153,12 +154,70 @@ def normalised_classification_matrix(labels, predictions, clf):
 
     return
 
+def tune_classification_model_hyperparameters(model, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict):
+    '''
+        Returns the best model, its metrics and the best hyperparameters after hyperparameter tunning. The best model is chosen based on the computed validation RMSE.
+
+        Parameters
+        ----------
+        model: sklearn.model
+            An instance of the sklearn model
+        
+        X_train, X_validation, X_test: numpy.ndarray
+            A set of numpy arrays containing the features of the model
+
+        y_train, y_validation, y_test: pandas.core.series.Series
+            A set of pandas series containing the targets/labels
+        
+        hyperparameters_dict: dict
+            A dictionary containing a range of hyperparameters 
+
+        Returns
+        -------
+        best_regression_model: sklearn.model
+            A model from sklearn
+        
+        best_hyperparameters_dict: dict
+            A dictionary containing the optimal hyperparameters configuration
+        
+        best_metrics_dict: dict 
+            A dictionary containing the test metrics obtained using the best model         
+    '''
+    best_regression_model = None
+    best_hyperparameters_dict = {}
+    best_metrics_dict = {}
+    
+    X = pd.concat([X_train, X_validation, X_test])
+    y = pd.concat([y_train, y_validation, y_test])
+    
+    model = model
+    hyperparameters = hyperparameters_dict
+    grid_search = GridSearchCV(model, hyperparameters, cv=5, scoring='accuracy')
+    grid_search.fit(X, y)
+    best_hyperparameters_dict[model] = grid_search.best_params_
+    best_metrics_dict[model] = grid_search.best_score_
+    if best_regression_model is None or best_metrics_dict[model] > best_metrics_dict[best_regression_model]:
+        best_regression_model = model
+        best_hyperparameters = best_hyperparameters_dict[model]
+
+    
+    model = best_regression_model.fit(X,y)
+    y_pred_validation = model.predict(X_validation)
+
+    best_metrics = {
+        "F1 score" : f1_score(y_validation, y_pred_validation, average="macro"),
+        "Precision":  precision_score(y_validation, y_pred_validation, average="macro"),
+        "Recall" :  recall_score(y_validation, y_pred_validation, average="macro"),
+        "Accuracy" :  accuracy_score(y_validation, y_pred_validation)
+    }
+
+    return best_regression_model, best_hyperparameters, best_metrics
 
 def run_methods():
 
     X, y = import_and_standardize_data()
 
-    X_train, X_validation, y_train, y_validation = split_data(X, y)
+    X_train, X_validation, X_test, y_train, y_validation, y_test = split_data(X, y)
 
     clf = LogisticRegression(random_state=0).fit(X_train, y_train)
 
@@ -176,15 +235,39 @@ def run_methods():
     # Obtain Normalised Confusion Matrices
     normalised_classification_matrix(y_train, y_pred_train, clf)
     normalised_classification_matrix(y_validation, y_pred_validation, clf)
+    
 
     return
 
+model = LogisticRegression()
+
+hyperparameters_dict = {'C': [1.0],
+ 'class_weight': ['balanced',None],
+ 'dual': [True, False],
+ 'fit_intercept': [True, False],
+ 'intercept_scaling': [1],
+ 'max_iter': [100],
+ 'multi_class': ['auto', 'ovr', 'multinomial'],
+ 'n_jobs': [None],
+ 'penalty': ['l1', 'l2', 'elasticnet', None],
+ 'random_state': [None],
+ 'solver': ['lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'],
+ 'tol': [0.0001],
+ 'verbose': [0],
+ 'warm_start': [True, False]}
 
 if __name__ == "__main__":
 
-    run_methods()
+    # run_methods()
+
+    X, y = import_and_standardize_data()
+
+    X_train, X_validation, X_test, y_train, y_validation, y_test = split_data(X, y)
+
+    best_regression_model, best_hyperparameters, best_metrics = tune_classification_model_hyperparameters(model, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict)
 
 
 # %%
+
 
 # %%

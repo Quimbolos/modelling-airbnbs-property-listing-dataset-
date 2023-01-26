@@ -1,1 +1,1 @@
-{"criterion": "friedman_mse", "max_features": "sqrt", "splitter": "best"}
+{"criterion": "poisson", "max_features": "log2", "splitter": "best"}

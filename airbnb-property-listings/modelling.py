@@ -44,7 +44,8 @@ def import_and_standardize_data():
     X['bedrooms'] = X['bedrooms'].str.replace('\'','').astype(np.float64)
 
     std = StandardScaler()
-    X = std.fit_transform(X)
+    scaled_features = std.fit_transform(X.values)
+    X = pd.DataFrame(scaled_features, index=X.index, columns=X.columns)
 
     return X, y
 
@@ -155,8 +156,7 @@ def custom_tune_regression_model_hyperparameters(models, X_train, X_validation, 
 
     return best_regression_model, best_hyperparameters_dict, best_metrics_dict
 
-
-def tune_regression_model_hyperparameters(model, X, y, X_test, y_test, hyperparameters_dict):
+def tune_regression_model_hyperparameters(model, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict):
     '''
         Returns the best model, its metrics and the best hyperparameters after hyperparameter tunning. The best model is chosen based on the computed validation RMSE.
 
@@ -165,17 +165,11 @@ def tune_regression_model_hyperparameters(model, X, y, X_test, y_test, hyperpara
         model: sklearn.model
             An instance of the sklearn model
         
-        X: numpy.ndarray
-            A numpy array containing the features of the model
+        X_train, X_validation, X_test: numpy.ndarray
+            A set of numpy arrays containing the features of the model
 
-        y: pandas.core.series.Series
-            A pandas series containing the targets/labels
-
-        X_test: numpy.ndarray
-            A numpy array containing the features of the model
-
-        y_test: pandas.core.series.Series
-            A pandas series containing the targets/labels
+        y_train, y_validation, y_test: pandas.core.series.Series
+            A set of pandas series containing the targets/labels
         
         hyperparameters_dict: dict
             A dictionary containing a range of hyperparameters 
@@ -194,12 +188,14 @@ def tune_regression_model_hyperparameters(model, X, y, X_test, y_test, hyperpara
     best_regression_model = None
     best_hyperparameters_dict = {}
     best_metrics_dict = {}
-    
+
+    X = pd.concat([X_train, X_validation, X_test])
+    y = pd.concat([y_train, y_validation, y_test])
     
     model = model
     hyperparameters = hyperparameters_dict
     grid_search = GridSearchCV(model, hyperparameters, cv=5, scoring='neg_mean_squared_error')
-    grid_search.fit(X, y)
+    grid_search.fit(X.values, y)
     best_hyperparameters_dict[model] = grid_search.best_params_
     best_metrics_dict[model] = grid_search.best_score_
     if best_regression_model is None or best_metrics_dict[model] > best_metrics_dict[best_regression_model]:
@@ -307,7 +303,7 @@ def evaluate_all_models(models,hyperparameters_dict):
     # Tune models hyperparameters using GirdSearchCV
     for i in range(len(models)):
 
-        best_regression_model, best_hyperparameters_dict, best_metrics_dict = tune_regression_model_hyperparameters(models[i], X, y, X_test, y_test, hyperparameters_dict[i])
+        best_regression_model, best_hyperparameters_dict, best_metrics_dict = tune_regression_model_hyperparameters(models[i], X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict[i])
 
         # Print Results
         print(best_regression_model, best_hyperparameters_dict, best_metrics_dict)
@@ -419,3 +415,7 @@ if __name__ == "__main__":
 
 # %%
 
+
+
+
+# %%
