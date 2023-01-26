@@ -6,6 +6,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn import metrics
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, accuracy_score
@@ -106,8 +108,7 @@ def split_data(X, y):
 
 def obtain_metrics(y_pred, y):
 
-    # Training
-    print("Training")
+    print("Metrics")
     print("F1 score:", f1_score(y, y_pred, average="macro"))
     print("Precision:", precision_score(y, y_pred, average="macro"))
     print("Recall:", recall_score(y, y_pred, average="macro"))
@@ -189,6 +190,7 @@ def tune_classification_model_hyperparameters(model, X_train, X_validation, X_te
 
     
     model = best_regression_model.fit(X,y)
+    best_regression_model = model
     y_pred_validation = model.predict(X_validation)
 
     best_metrics = {
@@ -300,7 +302,7 @@ def evaluate_all_models(models,hyperparameters_dict):
     # Tune models hyperparameters using GirdSearchCV
     for i in range(len(models)):
 
-        best_regression_model, best_hyperparameters_dict, best_metrics_dict = tune_regression_model_hyperparameters(models[i], X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict[i])
+        best_regression_model, best_hyperparameters_dict, best_metrics_dict = tune_classification_model_hyperparameters(models[i], X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict[i])
 
         # Print Results
         print(best_regression_model, best_hyperparameters_dict, best_metrics_dict)
@@ -308,38 +310,98 @@ def evaluate_all_models(models,hyperparameters_dict):
         # Save the models in their corresponding folders
         folder_name= str(models[i])[0:-2]
         save_model(folder_name, best_regression_model, best_hyperparameters_dict, best_metrics_dict)
+        
+        y_pred = best_regression_model.predict(X_test)
+        metrics_and_classification_matrices(y_test,y_pred,best_regression_model)
 
     return
 
-model = LogisticRegression()
+models = [LogisticRegression(), DecisionTreeClassifier(), RandomForestClassifier(), GradientBoostingClassifier()]
 
-hyperparameters_dict = {'C': [1.0],
- 'class_weight': ['balanced',None],
- 'dual': [True, False],
- 'fit_intercept': [True, False],
- 'intercept_scaling': [1],
- 'max_iter': [100],
- 'multi_class': ['auto', 'ovr', 'multinomial'],
- 'n_jobs': [None],
- 'penalty': ['l1', 'l2', 'elasticnet', None],
- 'random_state': [None],
- 'solver': ['lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'],
- 'tol': [0.0001],
- 'verbose': [0],
- 'warm_start': [True, False]}
+hyperparameters_dict = [{ # LogisticRegression
+
+    'C': [1.0],
+    'class_weight': ['balanced',None],
+    'dual': [True, False],
+    'fit_intercept': [True, False],
+    'intercept_scaling': [1],
+    'max_iter': [100],
+    'multi_class': ['auto', 'ovr', 'multinomial'],
+    'n_jobs': [None],
+    'penalty': ['l1', 'l2', 'elasticnet', None],
+    'random_state': [None],
+    'solver': ['lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'],
+    'tol': [0.0001],
+    'verbose': [0],
+    'warm_start': [True, False]
+
+},
+                        { # DecisionTreeClassifier
+    'ccp_alpha': [0.0],
+    'class_weight': [None],
+    'criterion': ['gini', 'entropy', 'log_loss'],
+    'max_depth': [0.1, 1, 5, None],
+    'max_features': ['auto', 'sqrt', 'log2', None],
+    'max_leaf_nodes': [None],
+    'min_impurity_decrease': [0.0],
+    'min_samples_leaf': [1],
+    'min_samples_split': [2],
+    'min_weight_fraction_leaf': [0.0],
+    'random_state': [None],
+    'splitter': ['best', 'random']
+
+},
+                        { # RandomForestClassifier
+    'bootstrap': [True, False],
+    'ccp_alpha': [0.0],
+    'criterion': ['gini', 'entropy', 'log_loss'],
+    'max_depth': [None],
+    'max_features': [1.0,'sqrt', 'log2', None],
+    'max_leaf_nodes': [None],
+    'max_samples': [None],
+    'min_impurity_decrease': [0.0],
+    'min_samples_leaf': [1],
+    'min_samples_split': [2],
+    'min_weight_fraction_leaf': [0.0],
+    'n_estimators': [50, 70, 100, 200],
+    'n_jobs': [None],
+    'oob_score': [True, False],
+    'random_state': [None],
+    'verbose': [0],
+    'warm_start': [True, False]
+},
+                        { # GradientBoostingClassifier
+
+    'ccp_alpha': [0.0],
+    'criterion': ['friedman_mse', 'squared_error'],
+    'init': [None],
+    'learning_rate': [0.1, 0.5, 1],
+    'loss': ['log_loss', 'deviance', 'exponential'],
+    'max_depth': [3],
+    'max_features': ['auto', 'sqrt', 'log2',None],
+    'max_leaf_nodes': [None],
+    'min_impurity_decrease': [0.0],
+    'min_samples_leaf': [1],
+    'min_samples_split': [2],
+    'min_weight_fraction_leaf': [0.0],
+    'n_estimators': [10, 50, 70, 100],
+    'n_iter_no_change': [None],
+    'random_state': [None],
+    'subsample': [1.0],
+    'tol': [0.0001],
+    'validation_fraction': [0.1],
+    'verbose': [0],
+    'warm_start': [True, False]
+}
+]
+
+
 
 if __name__ == "__main__":
 
-    # run_methods()
+    evaluate_all_models(models,hyperparameters_dict)
 
-    X, y = import_and_standardize_data()
-
-    X_train, X_validation, X_test, y_train, y_validation, y_test = split_data(X, y)
-
-    best_regression_model, best_hyperparameters, best_metrics = tune_classification_model_hyperparameters(model, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict)
-
-    folder_name= str(model)[0:-2]
-    save_model(folder_name, best_regression_model, best_hyperparameters, best_metrics)
+    
 
 # %%
 
