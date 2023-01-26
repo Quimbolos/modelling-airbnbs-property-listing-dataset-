@@ -5,6 +5,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, accuracy_score
@@ -103,37 +104,23 @@ def split_data(X, y):
     return X_train, X_validation, X_test, y_train, y_validation, y_test
 
 
-def obtain_metrics(y_pred_train, y_train, y_pred_validation, y_validation):
+def obtain_metrics(y_pred, y):
 
     # Training
     print("Training")
-    print("F1 score:", f1_score(y_train, y_pred_train, average="macro"))
-    print("Precision:", precision_score(y_train, y_pred_train, average="macro"))
-    print("Recall:", recall_score(y_train, y_pred_train, average="macro"))
-    print("Accuracy:", accuracy_score(y_train, y_pred_train))
+    print("F1 score:", f1_score(y, y_pred, average="macro"))
+    print("Precision:", precision_score(y, y_pred, average="macro"))
+    print("Recall:", recall_score(y, y_pred, average="macro"))
+    print("Accuracy:", accuracy_score(y, y_pred))
 
     train_metrics = {
-        "F1 score" : f1_score(y_train, y_pred_train, average="macro"),
-        "Precision":  precision_score(y_train, y_pred_train, average="macro"),
-        "Recall" :  recall_score(y_train, y_pred_train, average="macro"),
-        "Accuracy" :  accuracy_score(y_train, y_pred_train)
+        "F1 score" : f1_score(y, y_pred, average="macro"),
+        "Precision":  precision_score(y, y_pred, average="macro"),
+        "Recall" :  recall_score(y, y_pred, average="macro"),
+        "Accuracy" :  accuracy_score(y, y_pred)
     }
 
-    # Testing
-    print("Testing")
-    print("F1 score:", f1_score(y_validation, y_pred_validation, average="macro"))
-    print("Precision:", precision_score(y_validation, y_pred_validation, average="macro"))
-    print("Recall:", recall_score(y_validation, y_pred_validation, average="macro"))
-    print("Accuracy:", accuracy_score(y_validation, y_pred_validation))
-
-    test_metrics = {
-        "F1 score" : f1_score(y_validation, y_pred_validation, average="macro"),
-        "Precision":  precision_score(y_validation, y_pred_validation, average="macro"),
-        "Recall" :  recall_score(y_validation, y_pred_validation, average="macro"),
-        "Accuracy" :  accuracy_score(y_validation, y_pred_validation)
-    }
-
-    return test_metrics, train_metrics
+    return train_metrics
 
 
 def classification_matrix(labels, predictions, clf):
@@ -213,29 +200,114 @@ def tune_classification_model_hyperparameters(model, X_train, X_validation, X_te
 
     return best_regression_model, best_hyperparameters, best_metrics
 
-def run_methods():
-
-    X, y = import_and_standardize_data()
-
-    X_train, X_validation, X_test, y_train, y_validation, y_test = split_data(X, y)
-
-    clf = LogisticRegression(random_state=0).fit(X_train, y_train)
-
-    # Predict labels using training and validation datasets
-    y_pred_train = clf.predict(X_train)
-    y_pred_validation = clf.predict(X_validation)
+def metrics_and_classification_matrices(labels, predictions, fit_model):
 
     # Predict metrics using training and validation datasets
-    obtain_metrics(y_pred_train, y_train, y_pred_validation, y_validation)
+    obtain_metrics(predictions, labels)
 
     # Obtain Confusion Matrices
-    classification_matrix(y_train, y_pred_train, clf)
-    classification_matrix(y_validation, y_pred_validation, clf)
+    classification_matrix(labels, predictions, fit_model)
 
     # Obtain Normalised Confusion Matrices
-    normalised_classification_matrix(y_train, y_pred_train, clf)
-    normalised_classification_matrix(y_validation, y_pred_validation, clf)
-    
+    normalised_classification_matrix(labels, predictions, fit_model)
+  
+    return
+
+def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
+    '''
+        Creates a models folder, then within the models' folder creates a regression folder and finally creates a last folder-name folder where it stores the model, a dictionary of its hyperparameters and a dictionary of its metrics
+        
+        Parameters
+        ----------
+        folder_name: str
+            A string used to name the folder to be created
+        
+        best_model: sklearn.model
+            A model from sklearn
+        
+        best_hyperparameters: dict
+            A dictionary containing the optimal hyperparameters configuration
+        
+        best_metrics: dict 
+            A dictionary containing the test metrics obtained using the best model   
+
+        Returns
+        -------
+        None
+             
+    '''
+
+    # Create Models folder
+    models_dir = 'airbnb-property-listings/models'
+    current_dir = os.path.dirname(os.getcwd())
+    models_path = os.path.join(current_dir, models_dir)
+    if os.path.exists(models_path) == False:
+        os.mkdir(models_path)
+
+    # Create classification folder
+    classification_dir = 'airbnb-property-listings/models/classification'
+    current_dir = os.path.dirname(os.getcwd())
+    regression_path = os.path.join(current_dir, classification_dir)
+    if os.path.exists(regression_path) == False:
+        os.mkdir(regression_path)
+
+    # Create logistic_regression folder
+    folder_name_dir = os.path.join(regression_path,folder_name)
+    current_dir = os.path.dirname(os.getcwd())
+    folder_name_path = os.path.join(current_dir, folder_name_dir)
+    if os.path.exists(folder_name_path) == False:
+        os.mkdir(folder_name_path)
+
+    # Save the model in a file called model.joblib
+    joblib.dump(best_model, os.path.join(folder_name_path, 'model.joblib'))
+   
+    # Save the hyperparameters in a file called hyperparameters.json
+    with open(os.path.join(folder_name_path, 'hyperparameters.json'), 'w') as fp:
+            json.dump(best_hyperparameters, fp)
+
+    # Save the metrics in a file called metrics.json
+    with open(os.path.join(folder_name_path, 'metrics.json'), 'w') as fp:
+            json.dump(best_metrics, fp)
+
+
+    return
+
+def evaluate_all_models(models,hyperparameters_dict):
+    '''
+        Imports and Standardizes the data, splits the dataset and finds the best-tuned model from the provided sklearn models and a range of its hyperparameters.       
+        Finally, it saves the models, their metrics and their hyperparameters in their corresponding folders.
+        
+        Parameters 
+        ----------
+        models: list
+            A list of models from sklearn 
+        
+        hyperparameters_dict: list
+            A list of dictionaries containing a range of hyperparameters for each model
+
+        Returns
+        -------
+        None
+             
+    '''
+
+    # Import and standardize data
+    X, y = import_and_standardize_data()
+
+    # Split Data
+    X_train, X_validation, X_test, y_train, y_validation, y_test = split_data(X, y)
+
+    # Tune models hyperparameters using GirdSearchCV
+    for i in range(len(models)):
+
+        best_regression_model, best_hyperparameters_dict, best_metrics_dict = tune_regression_model_hyperparameters(models[i], X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict[i])
+
+        # Print Results
+        print(best_regression_model, best_hyperparameters_dict, best_metrics_dict)
+
+        # Save the models in their corresponding folders
+        folder_name= str(models[i])[0:-2]
+        save_model(folder_name, best_regression_model, best_hyperparameters_dict, best_metrics_dict)
 
     return
 
@@ -266,6 +338,8 @@ if __name__ == "__main__":
 
     best_regression_model, best_hyperparameters, best_metrics = tune_classification_model_hyperparameters(model, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict)
 
+    folder_name= str(model)[0:-2]
+    save_model(folder_name, best_regression_model, best_hyperparameters, best_metrics)
 
 # %%
 
