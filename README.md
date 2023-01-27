@@ -763,33 +763,33 @@ In **Task 2**, using sklearn, the key performance measures for classification mo
 
 - Using sklearn ```metrics```, F1 score, the precision, the recall, and the accuracy for both the training and test sets:
 
-    ```python
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, accuracy_score
+```python
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, accuracy_score
 
-    X, y = import_and_standardize_data()
+X, y = import_and_standardize_data()
 
-    X_train, X_validation, X_test, y_train, y_validation, y_test = split_data(X, y)
-    X_train, X_validation, y_train, y_validation = split_data(X, y)
+X_train, X_validation, X_test, y_train, y_validation, y_test = split_data(X, y)
+X_train, X_validation, y_train, y_validation = split_data(X, y)
 
-    clf = LogisticRegression(random_state=0).fit(X_train, y_train)
-    y_pred_train = clf.predict(X_train)
-    y_pred_test = clf.predict(X_test)
+clf = LogisticRegression(random_state=0).fit(X_train, y_train)
+y_pred_train = clf.predict(X_train)
+y_pred_test = clf.predict(X_test)
 
-    # Training
-    print("Training")
-    print("F1 score:", f1_score(y_train, y_pred_train, average="macro"))
-    print("Precision:", precision_score(y_train, y_pred_train, average="macro"))
-    print("Recall:", recall_score(y_train, y_pred_train, average="macro"))
-    print("Accuracy:", accuracy_score(y_train, y_pred_train))
+# Training
+print("Training")
+print("F1 score:", f1_score(y_train, y_pred_train, average="macro"))
+print("Precision:", precision_score(y_train, y_pred_train, average="macro"))
+print("Recall:", recall_score(y_train, y_pred_train, average="macro"))
+print("Accuracy:", accuracy_score(y_train, y_pred_train))
 
-    # Testing
-    print("Testing")
-    print("F1 score:", f1_score(y_test, y_pred_test, average="macro"))
-    print("Precision:", precision_score(y_test, y_pred_test, average="macro"))
-    print("Recall:", recall_score(y_test, y_pred_test, average="macro"))
-    print("Accuracy:", accuracy_score(y_test, y_pred_test))
-    ```
+# Testing
+print("Testing")
+print("F1 score:", f1_score(y_test, y_pred_test, average="macro"))
+print("Precision:", precision_score(y_test, y_pred_test, average="macro"))
+print("Recall:", recall_score(y_test, y_pred_test, average="macro"))
+print("Accuracy:", accuracy_score(y_test, y_pred_test))
+```
 
 In **Task 3**, the hyperparameters of the model are tuned using ```GridSearchCV``` from sklearn:
 
