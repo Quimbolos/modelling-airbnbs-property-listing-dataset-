@@ -357,7 +357,7 @@ The function takes in:
 
 - ```models``` -> ```list``` : A list of models from sklearn in their abc.ABCMeta format
 
-- ```X_train```, ```X_validation```, ```X_test``` -> ```numpy.ndarray``` : A set of numpy arrays containing the features of the model
+- ```X_train```, ```X_validation```, ```X_test``` -> ```pandas.core.frame.DataFrame``` : A set of pandas DataFrames containing the features of the model
 
 - ```y_train```, ```y_validation```, ```y_test``` -> ```pandas.core.series.Series``` : A set of pandas series containing the targets/labels
         
