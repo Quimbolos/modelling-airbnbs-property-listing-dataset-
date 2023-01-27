@@ -41,7 +41,7 @@ def load_airbnb():
     return features, labels
 
 
-def import_and_standardize_data():
+def import_and_standardise_data():
     '''
         Imports the data through the load_airbnb() function and then standardises it
 
@@ -210,7 +210,7 @@ def tune_classification_model_hyperparameters(model, X_train, X_validation, X_te
 
         Returns
         -------
-        best_regression_model: sklearn.model
+        best_classification_model: sklearn.model
             A model from sklearn
         
         best_hyperparameters_dict: dict
@@ -219,7 +219,7 @@ def tune_classification_model_hyperparameters(model, X_train, X_validation, X_te
         best_metrics_dict: dict 
             A dictionary containing the test metrics obtained using the best model         
     '''
-    best_regression_model = None
+    best_classification_model = None
     best_hyperparameters_dict = {}
     best_metrics_dict = {}
     
@@ -232,12 +232,12 @@ def tune_classification_model_hyperparameters(model, X_train, X_validation, X_te
     grid_search.fit(X, y)
     best_hyperparameters_dict[model] = grid_search.best_params_
     best_metrics_dict[model] = grid_search.best_score_
-    if best_regression_model is None or best_metrics_dict[model] > best_metrics_dict[best_regression_model]:
-        best_regression_model = model
+    if best_classification_model is None or best_metrics_dict[model] > best_metrics_dict[best_classification_model]:
+        best_classification_model = model
         best_hyperparameters = best_hyperparameters_dict[model]
     
-    model = best_regression_model.fit(X,y)
-    best_regression_model = model
+    model = best_classification_model.fit(X,y)
+    best_classification_model = model
     y_pred_test = model.predict(X_test)
 
     best_metrics = {
@@ -247,11 +247,11 @@ def tune_classification_model_hyperparameters(model, X_train, X_validation, X_te
         "Accuracy" :  accuracy_score(y_test, y_pred_test)
     }
 
-    return best_regression_model, best_hyperparameters, best_metrics
+    return best_classification_model, best_hyperparameters, best_metrics
 
 def metrics_and_classification_matrices(labels, predictions, fit_model):
     '''
-        Creates a confusion matrix for a model, its labels and its predictions
+        Creates a confusion matrix and computes metrics based on a model, its labels and its predictions
 
         Parameters
         ----------
@@ -311,12 +311,12 @@ def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
     # Create classification folder
     classification_dir = 'airbnb-property-listings/models/classification'
     current_dir = os.path.dirname(os.getcwd())
-    regression_path = os.path.join(current_dir, classification_dir)
-    if os.path.exists(regression_path) == False:
-        os.mkdir(regression_path)
+    classification_path = os.path.join(current_dir, classification_dir)
+    if os.path.exists(classification_path) == False:
+        os.mkdir(classification_path)
 
     # Create logistic_regression folder
-    folder_name_dir = os.path.join(regression_path,folder_name)
+    folder_name_dir = os.path.join(classification_path,folder_name)
     current_dir = os.path.dirname(os.getcwd())
     folder_name_path = os.path.join(current_dir, folder_name_dir)
     if os.path.exists(folder_name_path) == False:
@@ -337,7 +337,7 @@ def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
 
 def evaluate_all_models(models,hyperparameters_dict):
     '''
-        Imports and Standardizes the data, splits the dataset and finds the best-tuned model from the provided sklearn models and a range of its hyperparameters.       
+        Imports and standardises the data, splits the dataset and finds the best-tuned model from the provided sklearn models and a range of its hyperparameters.       
         Finally, it saves the models, their metrics and their hyperparameters in their corresponding folders.
         
         Parameters 
@@ -354,7 +354,7 @@ def evaluate_all_models(models,hyperparameters_dict):
     '''
 
     # Import and standardize data
-    X, y = import_and_standardize_data()
+    X, y = import_and_standardise_data()
 
     # Split Data
     X_train, X_validation, X_test, y_train, y_validation, y_test = split_data(X, y)
@@ -362,17 +362,17 @@ def evaluate_all_models(models,hyperparameters_dict):
     # Tune models hyperparameters using GirdSearchCV
     for i in range(len(models)):
 
-        best_regression_model, best_hyperparameters_dict, best_metrics_dict = tune_classification_model_hyperparameters(models[i], X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict[i])
+        best_classification_model, best_hyperparameters_dict, best_metrics_dict = tune_classification_model_hyperparameters(models[i], X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict[i])
 
         # Print Results
-        print(best_regression_model, best_hyperparameters_dict, best_metrics_dict)
+        print(best_classification_model, best_hyperparameters_dict, best_metrics_dict)
 
         # Save the models in their corresponding folders
         folder_name= str(models[i])[0:-2]
-        save_model(folder_name, best_regression_model, best_hyperparameters_dict, best_metrics_dict)
+        save_model(folder_name, best_classification_model, best_hyperparameters_dict, best_metrics_dict)
         
-        y_pred = best_regression_model.predict(X_test)
-        metrics_and_classification_matrices(y_test,y_pred,best_regression_model)
+        y_pred = best_classification_model.predict(X_test)
+        metrics_and_classification_matrices(y_test,y_pred,best_classification_model)
 
     return
 
@@ -389,7 +389,7 @@ def find_best_model(models):
 
         Returns
         -------
-        best_regression_model: sklearn.model
+        best_classification_model: sklearn.model
             A model from sklearn
         
         best_hyperparameters_dict: dict
@@ -399,8 +399,8 @@ def find_best_model(models):
             A dictionary containing the test metrics obtained using the best model          
     '''
 
-    # Find best metrics (best F1 == highest score) within the libraries 
-    best_regression_model = None
+    # Find best metrics (best F1 Score == highest score) within the libraries 
+    best_classification_model = None
     best_hyperparameters_dict = {}
     best_metrics_dict = {}
 
@@ -417,12 +417,12 @@ def find_best_model(models):
         metrics_path = open(os.path.join(model_dir, 'metrics.json'))
         metrics = json.load(metrics_path)
 
-        if best_regression_model is None or metrics.get("F1 score") > best_metrics_dict.get("F1 score"):
-            best_regression_model = model
+        if best_classification_model is None or metrics.get("F1 score") > best_metrics_dict.get("F1 score"):
+            best_classification_model = model
             best_hyperparameters_dict = hyperparameters
             best_metrics_dict = metrics
 
-    return best_regression_model, best_hyperparameters_dict, best_metrics_dict
+    return best_classification_model, best_hyperparameters_dict, best_metrics_dict
 
 hyperparameters_dict = [{ # LogisticRegression
 
@@ -501,10 +501,10 @@ if __name__ == "__main__":
 
     evaluate_all_models(models,hyperparameters_dict)
 
-    best_regression_model, best_hyperparameters_dict, best_metrics_dict = find_best_model(models)
+    best_classification_model, best_hyperparameters_dict, best_metrics_dict = find_best_model(models)
 
     print("Best Regression Model:")
-    print(best_regression_model)
+    print(best_classification_model)
     print("Hyperparameters:")
     print(best_hyperparameters_dict)
     print("Metrics:")

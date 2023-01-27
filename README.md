@@ -707,7 +707,7 @@ def find_best_model(models):
     return best_regression_model, best_hyperparameters_dict, best_metrics_dict
 ```
 
-This function are used inside a ```__name__ == "__main__"``` block, just after the ```evaluate_all_models()``` function.
+This function are used inside a ```if __name__ == "__main__"``` block, just after the ```evaluate_all_models()``` function.
 
 ```python
 if __name__ == "__main__":
@@ -807,7 +807,7 @@ The function takes in:
 
 The function returns:
 
-- ```best_regression_model``` -> ```sklearn.model``` : A model from sklearn
+- ```best_classification_model``` -> ```sklearn.model``` : A model from sklearn
 
 - ```best_hyperparameters_dict``` -> ```dict``` : A dictionary containing the best hyperparameter configuration
 
@@ -834,7 +834,7 @@ def tune_classification_model_hyperparameters(model, X_train, X_validation, X_te
 
         Returns
         -------
-        best_regression_model: sklearn.model
+        best_classification_model: sklearn.model
             A model from sklearn
         
         best_hyperparameters_dict: dict
@@ -843,7 +843,7 @@ def tune_classification_model_hyperparameters(model, X_train, X_validation, X_te
         best_metrics_dict: dict 
             A dictionary containing the test metrics obtained using the best model         
     '''
-    best_regression_model = None
+    best_classification_model = None
     best_hyperparameters_dict = {}
     best_metrics_dict = {}
     
@@ -856,12 +856,12 @@ def tune_classification_model_hyperparameters(model, X_train, X_validation, X_te
     grid_search.fit(X, y)
     best_hyperparameters_dict[model] = grid_search.best_params_
     best_metrics_dict[model] = grid_search.best_score_
-    if best_regression_model is None or best_metrics_dict[model] > best_metrics_dict[best_regression_model]:
-        best_regression_model = model
+    if best_classification_model is None or best_metrics_dict[model] > best_metrics_dict[best_classification_model]:
+        best_classification_model = model
         best_hyperparameters = best_hyperparameters_dict[model]
     
-    model = best_regression_model.fit(X,y)
-    best_regression_model = model
+    model = best_classification_model.fit(X,y)
+    best_classification_model = model
     y_pred_test = model.predict(X_test)
 
     best_metrics = {
@@ -871,12 +871,12 @@ def tune_classification_model_hyperparameters(model, X_train, X_validation, X_te
         "Accuracy" :  accuracy_score(y_test, y_pred_test)
     }
 
-    return best_regression_model, best_hyperparameters, best_metrics
+    return best_classification_model, best_hyperparameters, best_metrics
 ```
 
 As it has been done in the previous Milestone, the best model is chosen using the ```GridSearchCV``` method. The function is essentally the same as ```tune_classification_model_hyperparameters()```, but in this case, it evaluates the performance using a different metric. The scoring criteria is ```accuracy```.
 
-In **Task 5**, the model is saved through the function ```save_model()```:
+In **Task 4**, the model is saved through the function ```save_model()```:
 
 - Initially, this function creates a folder called ```models``` through Python's os library.
 
@@ -918,12 +918,12 @@ def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
     # Create classification folder
     classification_dir = 'airbnb-property-listings/models/classification'
     current_dir = os.path.dirname(os.getcwd())
-    regression_path = os.path.join(current_dir, classification_dir)
-    if os.path.exists(regression_path) == False:
-        os.mkdir(regression_path)
+    classification_path = os.path.join(current_dir, classification_dir)
+    if os.path.exists(classification_path) == False:
+        os.mkdir(classification_path)
 
     # Create logistic_regression folder
-    folder_name_dir = os.path.join(regression_path,folder_name)
+    folder_name_dir = os.path.join(classification_path,folder_name)
     current_dir = os.path.dirname(os.getcwd())
     folder_name_path = os.path.join(current_dir, folder_name_dir)
     if os.path.exists(folder_name_path) == False:
@@ -943,7 +943,7 @@ def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
     return
 ```
 
-In **Task 6**, the performance of the model is improved by using different models provided by sklearn:
+In **Task 5**, the performance of the model is improved by using different models provided by sklearn:
 
 ```python
 from sklearn.linear_model import LogisticRegression
@@ -955,13 +955,13 @@ models = [LogisticRegression(), DecisionTreeClassifier(), RandomForestClassifier
 
 ```
 
-- A function called ```evaluate_all_models()``` uses the ```tune_regression_model_hyperparameters()``` function on each model to tune their hyperparameters before evaluating them. In addition, the best model, its hyperparameters, and its metrics are saved in a folder named after the model. 
+- A function called ```evaluate_all_models()``` uses the ```tune_classification_model_hyperparameters()``` function on each model to tune their hyperparameters before evaluating them. In addition, the best model, its hyperparameters, and its metrics are saved in a folder named after the model. 
 
 ```python
 def evaluate_all_models(models,hyperparameters_dict):
     '''
         Imports and standardises the data, splits the dataset and finds the best-tuned model from the provided sklearn models and a range of its hyperparameters.       
-        Finally, it saves the models, metrics, and hyperparameters in their corresponding folders.
+        Finally, it saves the models, their metrics and their hyperparameters in their corresponding folders.
         
         Parameters 
         ----------
@@ -973,11 +973,11 @@ def evaluate_all_models(models,hyperparameters_dict):
 
         Returns
         -------
-        None        
+        None   
     '''
 
-    # Import and standardise data
-    X, y = import_and_standardize_data()
+    # Import and standardize data
+    X, y = import_and_standardise_data()
 
     # Split Data
     X_train, X_validation, X_test, y_train, y_validation, y_test = split_data(X, y)
@@ -985,19 +985,25 @@ def evaluate_all_models(models,hyperparameters_dict):
     # Tune models hyperparameters using GirdSearchCV
     for i in range(len(models)):
 
-        best_regression_model, best_hyperparameters_dict, best_metrics_dict = tune_regression_model_hyperparameters(models[i], X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict[i])
+        best_classification_model, best_hyperparameters_dict, best_metrics_dict = tune_classification_model_hyperparameters(models[i], X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict[i])
 
         # Print Results
-        print(best_regression_model, best_hyperparameters_dict, best_metrics_dict)
+        print(best_classification_model, best_hyperparameters_dict, best_metrics_dict)
 
         # Save the models in their corresponding folders
         folder_name= str(models[i])[0:-2]
-        save_model(folder_name, best_regression_model, best_hyperparameters_dict, best_metrics_dict)
+        save_model(folder_name, best_classification_model, best_hyperparameters_dict, best_metrics_dict)
+        
+        y_pred = best_classification_model.predict(X_test)
+        metrics_and_classification_matrices(y_test,y_pred,best_classification_model)
 
     return
 ```
 
-Finally, in **Task 7**, a function called ```find_best_model()``` evaluates which model is best, then returns the trained model, a dictionary of its hyperparameters, and a dictionary of its performance metrics. This function iterates through the metrics.json files for each model and chooses the best model based on the highest ``` R^2```  score.
+This function also calls the function ```metrics_and_classification_matrices```, a custom made fucntion which creates a confusion matrix and computes metrics based on a model, its labels and its predictions.
+
+
+Finally, in **Task 6**, a function called ```find_best_model()``` evaluates which model is best, then returns the trained model, a dictionary of its hyperparameters, and a dictionary of its performance metrics. This function iterates through the metrics.json files for each model and chooses the best model based on the highest ``` F1 Score```.
 
 
 ```python
@@ -1012,54 +1018,53 @@ def find_best_model(models):
 
         Returns
         -------
-        best_regression_model: sklearn.model
+        best_classification_model: sklearn.model
             A model from sklearn
         
         best_hyperparameters_dict: dict
             A dictionary containing the optimal hyperparameters configuration
         
         best_metrics_dict: dict 
-            A dictionary containing the test metrics obtained using the best model   
-             
+            A dictionary containing the test metrics obtained using the best model          
     '''
 
-    # Find best metrics (best R^2 == highest score) within the libraries 
-    best_regression_model = None
+    # Find best metrics (best F1 Score == highest score) within the libraries 
+    best_classification_model = None
     best_hyperparameters_dict = {}
     best_metrics_dict = {}
 
-    regression_dir = 'airbnb-property-listings/models/regression'
+    classification_dir = 'airbnb-property-listings/models/classification'
     current_dir = os.path.dirname(os.getcwd())
-    regression_path = os.path.join(current_dir, regression_dir)
+    classification_path = os.path.join(current_dir, classification_dir)
     
     for i in range(len(models)):
         model_str = str(models[i])[0:-2]
-        model_dir = os.path.join(regression_path, model_str)
+        model_dir = os.path.join(classification_path, model_str)
         model = load(os.path.join(model_dir, 'model.joblib'))
         hyperparameters_path = open(os.path.join(model_dir, 'hyperparameters.json'))
         hyperparameters = json.load(hyperparameters_path)
         metrics_path = open(os.path.join(model_dir, 'metrics.json'))
         metrics = json.load(metrics_path)
 
-        if best_regression_model is None or metrics.get("R^2") > best_metrics_dict.get("R^2"):
-            best_regression_model = model
+        if best_classification_model is None or metrics.get("F1 score") > best_metrics_dict.get("F1 score"):
+            best_classification_model = model
             best_hyperparameters_dict = hyperparameters
             best_metrics_dict = metrics
 
-    return best_regression_model, best_hyperparameters_dict, best_metrics_dict
+    return best_classification_model, best_hyperparameters_dict, best_metrics_dict
 ```
 
-This function are used inside a ```__name__ == "__main__"``` block, just after the ```evaluate_all_models()``` function.
+This function are used inside an ```if __name__ == "__main__"``` block, just after the ```evaluate_all_models()``` function.
 
 ```python
 if __name__ == "__main__":
 
-    evaluate_all_models(models, hyperparameters_dict)
+    evaluate_all_models(models,hyperparameters_dict)
 
-    best_regression_model, best_hyperparameters_dict, best_metrics_dict = find_best_model(models)
+    best_classification_model, best_hyperparameters_dict, best_metrics_dict = find_best_model(models)
 
     print("Best Regression Model:")
-    print(best_regression_model)
+    print(best_classification_model)
     print("Hyperparameters:")
     print(best_hyperparameters_dict)
     print("Metrics:")
