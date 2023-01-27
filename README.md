@@ -264,13 +264,13 @@ In **Task 1**, a file named ```modelling.py``` is created:
 
 - Initially, the ```load_airbnb()``` function defined earlier is used to load in the dataset features ```X``` and the price per night (```Price_Night```) as the label ```y```. 
 
-- Secondly, use ```StandardScaler()``` to standardise the features ```X```.
+- Secondly, the ```StandardScaler()``` is used to standardise the features ```X```.
 
-- Then, using the sklearn ```SGDRegressor()``` the ```Price_Night``` target is predicted from the features. 
+- Then, using the sklearn ```SGDRegressor()```, the ```Price_Night``` target is predicted from the features. 
 
 - The dataset is split into training, validation and testing datasets:
     - The training data is used to train the model
-    - The validation set should be used to help us choose the model. If we were to choose different models or configurations.
+    - The validation set should be used to help us choose the model (if we were to choose between different models or configurations).
     - The testing set is used to evaluate the model's performance on unseen data.
 
 - Seeding: 
