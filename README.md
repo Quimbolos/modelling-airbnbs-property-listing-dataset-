@@ -319,7 +319,7 @@ This task aims to get a baseline to compare other more advanced models and try t
 
 In **Task 2**, using sklearn, the performance of the model is evaluated:
 
-- Using the sklearn ```metrics```, the RMSE are R^2 are calculated:
+- Using sklearn ```metrics```, the RMSE are R^2 are calculated for the test and train datasets:
 
     ```python
     from sklearn import metrics
