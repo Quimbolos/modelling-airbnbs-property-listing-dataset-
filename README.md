@@ -602,7 +602,7 @@ def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
     return
 ```
 
-In **Task 6**, the performance of the model is imporved by using different models provided by sklearn:
+In **Task 6**, the performance of the model is improved by using different models provided by sklearn:
 
 ```python
 from sklearn.linear_model import SGDRegressor
@@ -613,7 +613,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 models = [SGDRegressor(), DecisionTreeRegressor(), RandomForestRegressor(), GradientBoostingRegressor()]
 ```
 
-- A function called ```evaluate_all_models()``` uses the ```tune_regression_model_hyperparameters()``` function on each model to tune their hyperparameters before evaluating them. In addition, the best model, its hyperparameters, and its metrics are saved in a folder named after the model class 
+- A function called ```evaluate_all_models()``` uses the ```tune_regression_model_hyperparameters()``` function on each model to tune their hyperparameters before evaluating them. In addition, the best model, its hyperparameters, and its metrics are saved in a folder named after the model. 
 
 ```python
 def evaluate_all_models(models,hyperparameters_dict):
@@ -631,7 +631,7 @@ def evaluate_all_models(models,hyperparameters_dict):
 
         Returns
         -------
-        None      
+        None        
     '''
 
     # Import and standardize data
@@ -643,7 +643,7 @@ def evaluate_all_models(models,hyperparameters_dict):
     # Tune models hyperparameters using GirdSearchCV
     for i in range(len(models)):
 
-        best_regression_model, best_hyperparameters_dict, best_metrics_dict = tune_regression_model_hyperparameters(models[i], X, y, X_test, y_test, hyperparameters_dict[i])
+        best_regression_model, best_hyperparameters_dict, best_metrics_dict = tune_regression_model_hyperparameters(models[i], X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict[i])
 
         # Print Results
         print(best_regression_model, best_hyperparameters_dict, best_metrics_dict)
