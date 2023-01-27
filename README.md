@@ -725,7 +725,7 @@ if __name__ == "__main__":
 ```
 
 ## Milestone 5: Create a classification model
-> Classification Machine Learning models are created and evaluated. These models predict the Category of the Airbnb apartments.
+> Classification Machine Learning models are created and evaluated. These models predict the Category of Airbnb apartments.
 
 In **Task 1**, a file named ```modelling_classification.py``` is created:
 
@@ -874,7 +874,7 @@ def tune_classification_model_hyperparameters(model, X_train, X_validation, X_te
     return best_classification_model, best_hyperparameters, best_metrics
 ```
 
-As it has been done in the previous Milestone, the best model is chosen using the ```GridSearchCV``` method. The function is essentally the same as ```tune_classification_model_hyperparameters()```, but in this case, it evaluates the performance using a different metric. The scoring criteria is ```accuracy```.
+As in the previous Milestone, the best model is chosen using the ```GridSearchCV``` method. The function is essentially the same as ```tune_classification_model_hyperparameters()```, but in this case, it evaluates the performance using a different metric. The scoring criterion is ```accuracy```.
 
 In **Task 4**, the model is saved through the function ```save_model()```:
 
@@ -961,7 +961,7 @@ models = [LogisticRegression(), DecisionTreeClassifier(), RandomForestClassifier
 def evaluate_all_models(models,hyperparameters_dict):
     '''
         Imports and standardises the data, splits the dataset and finds the best-tuned model from the provided sklearn models and a range of its hyperparameters.       
-        Finally, it saves the models, their metrics and their hyperparameters in their corresponding folders.
+        Finally, it saves the models, metrics, and hyperparameters in their corresponding folders.
         
         Parameters 
         ----------
@@ -976,7 +976,7 @@ def evaluate_all_models(models,hyperparameters_dict):
         None   
     '''
 
-    # Import and standardize data
+    # Import and standardise data
     X, y = import_and_standardise_data()
 
     # Split Data
@@ -1000,7 +1000,7 @@ def evaluate_all_models(models,hyperparameters_dict):
     return
 ```
 
-This function also calls the function ```metrics_and_classification_matrices```, a custom made fucntion which creates a confusion matrix and computes metrics based on a model, its labels and its predictions.
+This function also calls the function ```metrics_and_classification_matrices```, a custom-made function which creates a confusion matrix and computes metrics based on a model, its labels and its predictions.
 
 
 Finally, in **Task 6**, a function called ```find_best_model()``` evaluates which model is best, then returns the trained model, a dictionary of its hyperparameters, and a dictionary of its performance metrics. This function iterates through the metrics.json files for each model and chooses the best model based on the highest ``` F1 Score```.
