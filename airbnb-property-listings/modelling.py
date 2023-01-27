@@ -310,7 +310,6 @@ def evaluate_all_models(models,hyperparameters_dict):
 def find_best_model(models):
     '''
         Using the metrics.json files produced in the evaluate_all_models(), this function iterates through the files to find the best metrics and output the best model, its hyperparameters and its metrics.
-
         Parameters 
         ----------
         models: list
