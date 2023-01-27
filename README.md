@@ -258,7 +258,7 @@ def load_airbnb():
 ```
 
 ## Milestone 4: Create a regression model
-> Machine Learning models are created and evaluated. These models predict the price of the listing per night.
+> Regression Machine Learning models are created and evaluated. These models predict the price of the listing per night.
 
 In **Task 1**, a file named ```modelling.py``` is created:
 
@@ -283,7 +283,7 @@ In **Task 1**, a file named ```modelling.py``` is created:
 
         - Each time you run an algorithm randomly, the result may vary to some degree.
         - Random number generators employ a ```seed```, a numerical value that determines what values will be generated.
-        - For each run to be the same, (or to exhibit some phenomena similar to the case above), we should always seed all functions using random numbers.
+        - For each run to be the same (or to exhibit some phenomena similar to the case above), we should always seed all functions using random numbers.
 
             *The last one is quite easy in numpy and sklearn as it is a single line. Seeding via this approach is common in most frameworks*.
     - #### _Benefits of seed initialisation_:
@@ -313,7 +313,7 @@ linear_regression_model_SDGRegr = SGDRegressor()
 
 model = linear_regression_model_SDGRegr.fit(X_train, y_train)
 
-y_pred = model.predict(x_test) # Price x Night Predictions
+y_pred = model.predict(X_test) # Price x Night Predictions
 ```
 This task aims to get a baseline to compare other more advanced models and try to improve upon them.
 
@@ -406,7 +406,7 @@ def custom_tune_regression_model_hyperparameters(models, X_train, X_validation, 
     '''
     # Models input format : models = [SGDRegressor, linear_model.LinearRegression]
 
-    # Lists to store metrics, chosen Hypermarameters and the model for each iteration
+    # Lists to store metrics, chosen Hyperparameters and the model for each iteration
     validation_RMSE = []
     validation_R2 = []
     model_hyperparameters_val = [] 
@@ -618,8 +618,8 @@ models = [SGDRegressor(), DecisionTreeRegressor(), RandomForestRegressor(), Grad
 ```python
 def evaluate_all_models(models,hyperparameters_dict):
     '''
-        Imports and Standardizes the data, splits the dataset and finds the best-tuned model from the provided sklearn models and a range of its hyperparameters.       
-        Finally, it saves the models, their metrics and their hyperparameters in their corresponding folders.
+        Imports and standardises the data, splits the dataset and finds the best-tuned model from the provided sklearn models and a range of its hyperparameters.       
+        Finally, it saves the models, metrics, and hyperparameters in their corresponding folders.
         
         Parameters 
         ----------
@@ -634,7 +634,7 @@ def evaluate_all_models(models,hyperparameters_dict):
         None        
     '''
 
-    # Import and standardize data
+    # Import and standardise data
     X, y = import_and_standardize_data()
 
     # Split Data
@@ -723,3 +723,346 @@ if __name__ == "__main__":
     print("Metrics:")
     print(best_metrics_dict)
 ```
+
+## Milestone 5: Create a classification model
+> Classification Machine Learning models are created and evaluated. These models predict the Category of the Airbnb apartments.
+
+In **Task 1**, a file named ```modelling_classification.py``` is created:
+
+- Initially, the ```load_airbnb()``` is used to load in the dataset features ```X``` and the apartment's category (```Category```) as the label ```y```. 
+
+- Secondly, the ```StandardScaler()``` is used to standardise the features ```X```.
+
+- Then, using the sklearn ```LogisticRegression()```, the ```Category``` is determined from the features. 
+
+
+```python
+from tabular_data import load_airbnb
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+
+X, y = load_airbnb()
+
+std = StandardScaler()
+scaled_features = std.fit_transform(X.values)
+X = pd.DataFrame(scaled_features, index=X.index, columns=X.columns)
+
+np.random.seed(10)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+X_test, X_validation, y_test, y_validation = train_test_split(X_test, y_test, test_size=0.5)
+
+clf = LogisticRegression()
+
+model = clf.fit(X_train, y_train)
+
+y_pred = model.predict(X_test) # Category Predictions
+```
+
+In **Task 2**, using sklearn, the key performance measures for classification models are computed:
+
+- Using sklearn ```metrics```, F1 score, the precision, the recall, and the accuracy for both the training and test sets:
+
+    ```python
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, accuracy_score
+
+    X, y = import_and_standardize_data()
+
+    X_train, X_validation, X_test, y_train, y_validation, y_test = split_data(X, y)
+    X_train, X_validation, y_train, y_validation = split_data(X, y)
+
+    clf = LogisticRegression(random_state=0).fit(X_train, y_train)
+    y_pred_train = clf.predict(X_train)
+    y_pred_test = clf.predict(X_test)
+
+    # Training
+    print("Training")
+    print("F1 score:", f1_score(y_train, y_pred_train, average="macro"))
+    print("Precision:", precision_score(y_train, y_pred_train, average="macro"))
+    print("Recall:", recall_score(y_train, y_pred_train, average="macro"))
+    print("Accuracy:", accuracy_score(y_train, y_pred_train))
+
+    # Testing
+    print("Testing")
+    print("F1 score:", f1_score(y_test, y_pred_test, average="macro"))
+    print("Precision:", precision_score(y_test, y_pred_test, average="macro"))
+    print("Recall:", recall_score(y_test, y_pred_test, average="macro"))
+    print("Accuracy:", accuracy_score(y_test, y_pred_test))
+    ```
+
+In **Task 3**, the hyperparameters of the model are tuned using ```GridSearchCV``` from sklearn:
+
+ - A function called ```tune_classification_model_hyperparameters()``` is created
+
+The function takes in:
+
+- ```model``` -> ```sklearn.model``` : An instance of the sklearn model
+
+- ```X_train```, ```X_validation```, ```X_test``` -> ```pandas.core.frame.DataFrame``` : A set of pandas DataFrames containing the features of the model
+
+- ```y_train```, ```y_validation```, ```y_test``` -> ```pandas.core.series.Series``` : A set of pandas series containing the targets/labels
+        
+- ```hyperparameters_dict``` -> ```dict``` : A dictionary containing a range of hyperparameters to be tried for each model
+
+The function returns:
+
+- ```best_regression_model``` -> ```sklearn.model``` : A model from sklearn
+
+- ```best_hyperparameters_dict``` -> ```dict``` : A dictionary containing the best hyperparameter configuration
+
+- ```best_metrics_dict``` -> ```dict``` : A dictionary containing the test metrics obtained using the best model  
+
+```python
+def tune_classification_model_hyperparameters(model, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict):
+    '''
+        Returns the best model, its metrics and the best hyperparameters after hyperparameter tunning. The best model is chosen based on the computed validation RMSE.
+
+        Parameters
+        ----------
+        model: sklearn.model
+            An instance of the sklearn model
+        
+        X_train, X_validation, X_test: pandas.core.frame.DataFrame
+            A set of pandas DataFrames containing the features of the model
+
+        y_train, y_validation, y_test: pandas.core.series.Series
+            A set of pandas series containing the targets/labels
+        
+        hyperparameters_dict: dict
+            A dictionary containing a range of hyperparameters 
+
+        Returns
+        -------
+        best_regression_model: sklearn.model
+            A model from sklearn
+        
+        best_hyperparameters_dict: dict
+            A dictionary containing the optimal hyperparameters configuration
+        
+        best_metrics_dict: dict 
+            A dictionary containing the test metrics obtained using the best model         
+    '''
+    best_regression_model = None
+    best_hyperparameters_dict = {}
+    best_metrics_dict = {}
+    
+    X = pd.concat([X_train, X_validation, X_test])
+    y = pd.concat([y_train, y_validation, y_test])
+    
+    model = model
+    hyperparameters = hyperparameters_dict
+    grid_search = GridSearchCV(model, hyperparameters, cv=5, scoring='accuracy')
+    grid_search.fit(X, y)
+    best_hyperparameters_dict[model] = grid_search.best_params_
+    best_metrics_dict[model] = grid_search.best_score_
+    if best_regression_model is None or best_metrics_dict[model] > best_metrics_dict[best_regression_model]:
+        best_regression_model = model
+        best_hyperparameters = best_hyperparameters_dict[model]
+    
+    model = best_regression_model.fit(X,y)
+    best_regression_model = model
+    y_pred_test = model.predict(X_test)
+
+    best_metrics = {
+        "F1 score" : f1_score(y_test, y_pred_test, average="macro"),
+        "Precision":  precision_score(y_test, y_pred_test, average="macro"),
+        "Recall" :  recall_score(y_test, y_pred_test, average="macro"),
+        "Accuracy" :  accuracy_score(y_test, y_pred_test)
+    }
+
+    return best_regression_model, best_hyperparameters, best_metrics
+```
+
+As it has been done in the previous Milestone, the best model is chosen using the ```GridSearchCV``` method. The function is essentally the same as ```tune_classification_model_hyperparameters()```, but in this case, it evaluates the performance using a different metric. The scoring criteria is ```accuracy```.
+
+In **Task 5**, the model is saved through the function ```save_model()```:
+
+- Initially, this function creates a folder called ```models``` through Python's os library.
+
+- Secondly, within the ```models``` folder, another folder called ```classification``` is created to save the regression models and their metrics in.
+
+- Finally, within the ```classification``` folder, a last foler named ```folder_name``` is created to save the trained and tuned model in a file called ```model.joblib```, its hyperparameters in a file called ```hyperparameters.json```, and its performance metrics in a file called ```metrics.json```.
+
+```python
+def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
+    '''
+        Creates a models folder, then within the models' folder creates a classification folder and finally creates a last folder-name folder where it stores the model, a dictionary of its hyperparameters and a dictionary of its metrics
+        
+        Parameters
+        ----------
+        folder_name: str
+            A string used to name the folder to be created
+        
+        best_model: sklearn.model
+            A model from sklearn
+        
+        best_hyperparameters: dict
+            A dictionary containing the optimal hyperparameters configuration
+        
+        best_metrics: dict 
+            A dictionary containing the test metrics obtained using the best model   
+
+        Returns
+        -------
+        None         
+    '''
+
+    # Create Models folder
+    models_dir = 'airbnb-property-listings/models'
+    current_dir = os.path.dirname(os.getcwd())
+    models_path = os.path.join(current_dir, models_dir)
+    if os.path.exists(models_path) == False:
+        os.mkdir(models_path)
+
+    # Create classification folder
+    classification_dir = 'airbnb-property-listings/models/classification'
+    current_dir = os.path.dirname(os.getcwd())
+    regression_path = os.path.join(current_dir, classification_dir)
+    if os.path.exists(regression_path) == False:
+        os.mkdir(regression_path)
+
+    # Create logistic_regression folder
+    folder_name_dir = os.path.join(regression_path,folder_name)
+    current_dir = os.path.dirname(os.getcwd())
+    folder_name_path = os.path.join(current_dir, folder_name_dir)
+    if os.path.exists(folder_name_path) == False:
+        os.mkdir(folder_name_path)
+
+    # Save the model in a file called model.joblib
+    joblib.dump(best_model, os.path.join(folder_name_path, 'model.joblib'))
+   
+    # Save the hyperparameters in a file called hyperparameters.json
+    with open(os.path.join(folder_name_path, 'hyperparameters.json'), 'w') as fp:
+            json.dump(best_hyperparameters, fp)
+
+    # Save the metrics in a file called metrics.json
+    with open(os.path.join(folder_name_path, 'metrics.json'), 'w') as fp:
+            json.dump(best_metrics, fp)
+
+    return
+```
+
+In **Task 6**, the performance of the model is improved by using different models provided by sklearn:
+
+```python
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+
+models = [LogisticRegression(), DecisionTreeClassifier(), RandomForestClassifier(), GradientBoostingClassifier()]
+
+```
+
+- A function called ```evaluate_all_models()``` uses the ```tune_regression_model_hyperparameters()``` function on each model to tune their hyperparameters before evaluating them. In addition, the best model, its hyperparameters, and its metrics are saved in a folder named after the model. 
+
+```python
+def evaluate_all_models(models,hyperparameters_dict):
+    '''
+        Imports and standardises the data, splits the dataset and finds the best-tuned model from the provided sklearn models and a range of its hyperparameters.       
+        Finally, it saves the models, metrics, and hyperparameters in their corresponding folders.
+        
+        Parameters 
+        ----------
+        models: list
+            A list of models from sklearn 
+        
+        hyperparameters_dict: list
+            A list of dictionaries containing a range of hyperparameters for each model
+
+        Returns
+        -------
+        None        
+    '''
+
+    # Import and standardise data
+    X, y = import_and_standardize_data()
+
+    # Split Data
+    X_train, X_validation, X_test, y_train, y_validation, y_test = split_data(X, y)
+
+    # Tune models hyperparameters using GirdSearchCV
+    for i in range(len(models)):
+
+        best_regression_model, best_hyperparameters_dict, best_metrics_dict = tune_regression_model_hyperparameters(models[i], X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict[i])
+
+        # Print Results
+        print(best_regression_model, best_hyperparameters_dict, best_metrics_dict)
+
+        # Save the models in their corresponding folders
+        folder_name= str(models[i])[0:-2]
+        save_model(folder_name, best_regression_model, best_hyperparameters_dict, best_metrics_dict)
+
+    return
+```
+
+Finally, in **Task 7**, a function called ```find_best_model()``` evaluates which model is best, then returns the trained model, a dictionary of its hyperparameters, and a dictionary of its performance metrics. This function iterates through the metrics.json files for each model and chooses the best model based on the highest ``` R^2```  score.
+
+
+```python
+def find_best_model(models):
+    '''
+        Using the metrics.json files produced in the evaluate_all_models(), this function iterates through the files to find the best metrics and output the best model, its hyperparameters and its metrics.
+
+        Parameters 
+        ----------
+        models: list
+            A list of models from sklearn 
+
+        Returns
+        -------
+        best_regression_model: sklearn.model
+            A model from sklearn
+        
+        best_hyperparameters_dict: dict
+            A dictionary containing the optimal hyperparameters configuration
+        
+        best_metrics_dict: dict 
+            A dictionary containing the test metrics obtained using the best model   
+             
+    '''
+
+    # Find best metrics (best R^2 == highest score) within the libraries 
+    best_regression_model = None
+    best_hyperparameters_dict = {}
+    best_metrics_dict = {}
+
+    regression_dir = 'airbnb-property-listings/models/regression'
+    current_dir = os.path.dirname(os.getcwd())
+    regression_path = os.path.join(current_dir, regression_dir)
+    
+    for i in range(len(models)):
+        model_str = str(models[i])[0:-2]
+        model_dir = os.path.join(regression_path, model_str)
+        model = load(os.path.join(model_dir, 'model.joblib'))
+        hyperparameters_path = open(os.path.join(model_dir, 'hyperparameters.json'))
+        hyperparameters = json.load(hyperparameters_path)
+        metrics_path = open(os.path.join(model_dir, 'metrics.json'))
+        metrics = json.load(metrics_path)
+
+        if best_regression_model is None or metrics.get("R^2") > best_metrics_dict.get("R^2"):
+            best_regression_model = model
+            best_hyperparameters_dict = hyperparameters
+            best_metrics_dict = metrics
+
+    return best_regression_model, best_hyperparameters_dict, best_metrics_dict
+```
+
+This function are used inside a ```__name__ == "__main__"``` block, just after the ```evaluate_all_models()``` function.
+
+```python
+if __name__ == "__main__":
+
+    evaluate_all_models(models, hyperparameters_dict)
+
+    best_regression_model, best_hyperparameters_dict, best_metrics_dict = find_best_model(models)
+
+    print("Best Regression Model:")
+    print(best_regression_model)
+    print("Hyperparameters:")
+    print(best_hyperparameters_dict)
+    print("Metrics:")
+    print(best_metrics_dict)
+```
+
