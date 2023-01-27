@@ -563,8 +563,7 @@ def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
 
         Returns
         -------
-        None
-             
+        None      
     '''
 
     # Create Models folder

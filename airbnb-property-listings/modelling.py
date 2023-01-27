@@ -30,9 +30,8 @@ def import_and_standardize_data():
             A pandas DataFrame containing the features of the model
 
         y: pandas.core.series.Series
-            A pandas series containing the targets/labels 
-            
-        '''
+            A pandas series containing the targets/labels   
+    '''
 
     X, y = load_airbnb()
 
@@ -66,8 +65,7 @@ def split_data(X, y):
             A set of pandas DataFrames containing the features of the model
 
         y_train, y_validation, y_test: pandas.core.series.Series
-            A set of pandas series containing the targets/labels 
-        
+            A set of pandas series containing the targets/labels  
     '''
 
     np.random.seed(10)
@@ -234,8 +232,7 @@ def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
 
         Returns
         -------
-        None
-             
+        None       
     '''
 
     # Create Models folder
@@ -270,9 +267,7 @@ def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
     with open(os.path.join(folder_name_path, 'metrics.json'), 'w') as fp:
             json.dump(best_metrics, fp)
 
-
     return
-
 
 def evaluate_all_models(models,hyperparameters_dict):
     '''
@@ -289,8 +284,7 @@ def evaluate_all_models(models,hyperparameters_dict):
 
         Returns
         -------
-        None
-             
+        None        
     '''
 
     # Import and standardize data
@@ -331,8 +325,7 @@ def find_best_model(models):
             A dictionary containing the optimal hyperparameters configuration
         
         best_metrics_dict: dict 
-            A dictionary containing the test metrics obtained using the best model   
-             
+            A dictionary containing the test metrics obtained using the best model            
     '''
 
     # Find best metrics (best R^2 == highest score) within the libraries 
@@ -402,7 +395,6 @@ if __name__ == "__main__":
     evaluate_all_models(models, hyperparameters_dict)
 
     best_regression_model, best_hyperparameters_dict, best_metrics_dict = find_best_model(models)
-
     
     print("Best Regression Model:")
     print(best_regression_model)
