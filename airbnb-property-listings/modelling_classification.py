@@ -250,7 +250,25 @@ def tune_classification_model_hyperparameters(model, X_train, X_validation, X_te
     return best_regression_model, best_hyperparameters, best_metrics
 
 def metrics_and_classification_matrices(labels, predictions, fit_model):
+    '''
+        Creates a confusion matrix for a model, its labels and its predictions
 
+        Parameters
+        ----------
+        labels: pandas.core.series.Series
+            A pandas DataFrame containing the targets/labels 
+
+        predictions: pandas.core.series.Series
+            A pandas series containing the predictions of the model
+
+        fit_model: sklean.model
+            A trained model of a sklearn classifier model
+
+        Returns
+        -------
+        None
+    '''
+    
     # Predict metrics using training and validation datasets
     obtain_metrics(predictions, labels)
     # Obtain Confusion Matrices
@@ -378,8 +396,7 @@ def find_best_model(models):
             A dictionary containing the optimal hyperparameters configuration
         
         best_metrics_dict: dict 
-            A dictionary containing the test metrics obtained using the best model   
-             
+            A dictionary containing the test metrics obtained using the best model          
     '''
 
     # Find best metrics (best F1 == highest score) within the libraries 
