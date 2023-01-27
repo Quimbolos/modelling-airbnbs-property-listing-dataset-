@@ -376,78 +376,77 @@ The dictionary of performance metrics includes a variable called "validation_RMS
 
 ```python
 def custom_tune_regression_model_hyperparameters(models, X_train, X_validation, X_test, y_train, y_validation, y_test, hyperparameters_dict):
-'''
-    Returns the best model, its metrics and the best hyperparameters after hyperparameter tunning. The best model is chosen based on the computed validation RMSE.
+    '''
+        Returns the best model, its metrics and the best hyperparameters after hyperparameter tunning. The best model is chosen based on the computed validation RMSE.
 
-    Parameters
-    ----------
-    models: list
-        A list of models from sklearn in their abc.ABCMeta format
+        Parameters
+        ----------
+        models: list
+            A list of models from sklearn in their abc.ABCMeta format
 
-    X_train, X_validation, X_test: numpy.ndarray
-        A set of numpy arrays containing the features of the model
+        X_train, X_validation, X_test: pandas.core.frame.DataFrame
+            A set of pandas DataFrames containing the features of the model
 
-    y_train, y_validation, y_test: pandas.core.series.Series
-        A set of pandas series containing the targets/labels
-    
-    hyperparameters_dict: list
-        A list of dictionaries containing a range of hyperparameters for each model
+        y_train, y_validation, y_test: pandas.core.series.Series
+            A set of pandas series containing the targets/labels
+        
+        hyperparameters_dict: list
+            A list of dictionaries containing a range of hyperparameters for each model
 
-    Returns
-    -------
-    best_regression_model: sklearn.model
-        A model from sklearn
-    
-    best_hyperparameters_dict: dict
-        A dictionary containing the optimal hyperparameters configuration
-    
-    best_metrics_dict: dict 
-        A dictionary containing the test metrics obtained using the best model         
-'''
+        Returns
+        -------
+        best_regression_model: sklearn.model
+            A model from sklearn
+        
+        best_hyperparameters_dict: dict
+            A dictionary containing the optimal hyperparameters configuration
+        
+        best_metrics_dict: dict 
+            A dictionary containing the test metrics obtained using the best model         
+    '''
+    # Models input format : models = [SGDRegressor, linear_model.LinearRegression]
 
-# Models input format : models = [SGDRegressor, linear_model.LinearRegression]
+    # Lists to store metrics, chosen Hypermarameters and the model for each iteration
+    validation_RMSE = []
+    validation_R2 = []
+    model_hyperparameters_val = [] 
+    model_val = []
 
-# Lists to store metrics, chosen Hyperparameters and the model for each iteration
-validation_RMSE = []
-validation_R2 = []
-model_hyperparameters_val = [] 
-model_val = []
+    # For each model, select the model class and the hyperparameters dictionary
+    for i in range(len(models)):
+        model = models[i]
+        hyperparameters_dict_ = hyperparameters_dict[i]
 
-# For each model, select the model class and the hyperparameters dictionary
-for i in range(len(models)):
-    model = models[i]
-    hyperparameters_dict_ = hyperparameters_dict[i]
+        # For each hyperparameter combination, create a model and store its metrics and hyperparameters
+        for hyperparameters in itertools.product(*hyperparameters_dict_.values()):
+            hyperparameters_ = dict(zip(hyperparameters_dict_.keys(),hyperparameters))
+            regression_model = model(**hyperparameters_)
+            model_ = regression_model.fit(X_train, y_train)
+            y_pred = model_.predict(X_validation)
+            validation_RMSE.append(metrics.mean_squared_error(y_validation, y_pred, squared=False))
+            validation_R2.append(metrics.r2_score(y_validation, y_pred))
+            model_hyperparameters_val.append(hyperparameters_)
+            model_val.append(regression_model)
 
-    # For each hyperparameter combination, create a model and store its metrics and hyperparameters
-    for hyperparameters in itertools.product(*hyperparameters_dict_.values()):
-        hyperparameters_ = dict(zip(hyperparameters_dict_.keys(),hyperparameters))
-        regression_model = model(**hyperparameters_)
-        model_ = regression_model.fit(X_train, y_train)
-        y_pred = model_.predict(X_validation)
-        validation_RMSE.append(metrics.mean_squared_error(y_validation, y_pred, squared=False))
-        validation_R2.append(metrics.r2_score(y_validation, y_pred))
-        model_hyperparameters_val.append(hyperparameters_)
-        model_val.append(regression_model)
+    # Select the model with the best RMSE
+    index = np.argmin(validation_RMSE)
+    best_model = model_val[index]
+    best_hyperparameters_dict = model_hyperparameters_val[index]
 
-# Select the model with the best RMSE
-index = np.argmin(validation_RMSE)
-best_model = model_val[index]
-best_hyperparameters_dict = model_hyperparameters_val[index]
+    # Train the best model
+    best_regression_model = best_model.fit(X_train, y_train)
+    y_pred_test= best_regression_model.predict(X_test)
 
-# Train the best model
-best_regression_model = best_model.fit(X_train, y_train)
-y_pred_test= best_regression_model.predict(X_test)
+    # Obtain the metrics
+    test_RMSE = metrics.mean_squared_error(y_test, y_pred_test, squared=False)
+    test_R2 = metrics.r2_score(y_test, y_pred_test)
 
-# Obtain the metrics
-test_RMSE = metrics.mean_squared_error(y_test, y_pred_test, squared=False)
-test_R2 = metrics.r2_score(y_test, y_pred_test)
+    best_metrics_dict = {
+        'RMSE' : test_RMSE,
+        'R^2' : test_R2
+    }
 
-best_metrics_dict = {
-    'RMSE' : test_RMSE,
-    'R^2' : test_R2
-}
-
-return best_regression_model, best_hyperparameters_dict, best_metrics_dict
+    return best_regression_model, best_hyperparameters_dict, best_metrics_dict
 ```
 
 In **Task 4**, the hyperparameters of the model are tuned using methods from sklearn:
