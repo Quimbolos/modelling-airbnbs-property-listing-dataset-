@@ -356,7 +356,6 @@ def find_best_model(models):
 
 models = [SGDRegressor(), DecisionTreeRegressor(), RandomForestRegressor(), GradientBoostingRegressor()]
 
-
 hyperparameters_dict = [{ # SGDRegressor Hyperparameters (Selection)
 
     'loss':['squared_error','huber', 'squared_epsilon_insensitive'],

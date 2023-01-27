@@ -655,7 +655,7 @@ def evaluate_all_models(models,hyperparameters_dict):
     return
 ```
 
-Finally, in **Task 7**, a function called ```find_best_model()``` evaluates which model is best, then returns the loaded model, a dictionary of its hyperparameters, and a dictionary of its performance metrics. This function iterates through the metrics.json files for each model and chooses the best model based on the highest ``` R^2```  score.
+Finally, in **Task 7**, a function called ```find_best_model()``` evaluates which model is best, then returns the trained model, a dictionary of its hyperparameters, and a dictionary of its performance metrics. This function iterates through the metrics.json files for each model and chooses the best model based on the highest ``` R^2```  score.
 
 
 ```python
@@ -707,7 +707,7 @@ def find_best_model(models):
     return best_regression_model, best_hyperparameters_dict, best_metrics_dict
 ```
 
-This function inside a ```__name__ == "__main__"``` block, just after the ```evaluate_all_models()``` function.
+This function are used inside a ```__name__ == "__main__"``` block, just after the ```evaluate_all_models()``` function.
 
 ```python
 if __name__ == "__main__":
@@ -716,7 +716,6 @@ if __name__ == "__main__":
 
     best_regression_model, best_hyperparameters_dict, best_metrics_dict = find_best_model(models)
 
-    
     print("Best Regression Model:")
     print(best_regression_model)
     print("Hyperparameters:")
