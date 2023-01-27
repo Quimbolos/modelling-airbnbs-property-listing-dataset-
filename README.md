@@ -301,7 +301,8 @@ from sklearn.preprocessing import StandardScaler
 X, y = load_airbnb()
 
 std = StandardScaler()
-X = std.fit_transform(X)
+scaled_features = std.fit_transform(X.values)
+X = pd.DataFrame(scaled_features, index=X.index, columns=X.columns)
 
 np.random.seed(10)
 
