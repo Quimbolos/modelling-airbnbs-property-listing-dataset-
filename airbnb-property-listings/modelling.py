@@ -6,7 +6,6 @@ from sklearn.linear_model import SGDRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn import linear_model
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn import metrics
@@ -14,7 +13,7 @@ from sklearn.preprocessing import StandardScaler
 import itertools
 import os
 import joblib 
-from joblib import dump, load
+from joblib import load
 import json
 
 def import_and_standardize_data():
@@ -27,8 +26,8 @@ def import_and_standardize_data():
 
         Returns
         -------
-        X: numpy.ndarray
-            A numpy array containing the features of the model
+        X: pandas.core.frame.DataFrame
+            A pandas DataFrame containing the features of the model
 
         y: pandas.core.series.Series
             A pandas series containing the targets/labels 
@@ -55,16 +54,16 @@ def split_data(X, y):
 
         Parameters
         ----------
-        X: numpy.ndarray
-            A numpy array containing the features of the model
+        X: pandas.core.frame.DataFrame
+            A pandas DataFrame containing the features of the model
 
         y: pandas.core.series.Series
             A pandas series containing the targets/labels 
 
         Returns
         -------
-        X_train, X_validation, X_test: numpy.ndarray
-            A set of numpy arrays containing the features of the model
+        X_train, X_validation, X_test: pandas.core.frame.DataFrame
+            A set of pandas DataFrames containing the features of the model
 
         y_train, y_validation, y_test: pandas.core.series.Series
             A set of pandas series containing the targets/labels 
@@ -92,8 +91,8 @@ def custom_tune_regression_model_hyperparameters(models, X_train, X_validation, 
         models: list
             A list of models from sklearn in their abc.ABCMeta format
 
-        X_train, X_validation, X_test: numpy.ndarray
-            A set of numpy arrays containing the features of the model
+        X_train, X_validation, X_test: pandas.core.frame.DataFrame
+            A set of pandas DataFrames containing the features of the model
 
         y_train, y_validation, y_test: pandas.core.series.Series
             A set of pandas series containing the targets/labels
@@ -165,8 +164,8 @@ def tune_regression_model_hyperparameters(model, X_train, X_validation, X_test, 
         model: sklearn.model
             An instance of the sklearn model
         
-        X_train, X_validation, X_test: numpy.ndarray
-            A set of numpy arrays containing the features of the model
+        X_train, X_validation, X_test: pandas.core.frame.DataFrame
+            A set of pandas DataFrames containing the features of the model
 
         y_train, y_validation, y_test: pandas.core.series.Series
             A set of pandas series containing the targets/labels
@@ -202,8 +201,8 @@ def tune_regression_model_hyperparameters(model, X_train, X_validation, X_test, 
         best_regression_model = model
         best_hyperparameters = best_hyperparameters_dict[model]
 
-    
     model = best_regression_model.fit(X,y)
+    best_regression_model = model
     y_pred = model.predict(X_test)
 
     test_RMSE = (metrics.mean_squared_error(y_test, y_pred, squared=False))

@@ -1,5 +1,4 @@
 # %%
-from tabular_data import load_airbnb
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -8,20 +7,19 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn import metrics
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, accuracy_score
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import os
 import joblib 
-from joblib import dump, load
+from joblib import load
 import json
 
 
 def load_airbnb():
     '''
-    Returns the features and labels from the clean tabular data in a tuple. It only includes numerical tabular data.
+    Returns the features (X) and labels (y) from the clean tabular data in a tuple. The features (X) only include numerical tabular data.
 
     Parameters
     ----------
@@ -53,13 +51,12 @@ def import_and_standardize_data():
 
         Returns
         -------
-        X: numpy.ndarray
-            A numpy array containing the features of the model
+        X: pandas.core.frame.DataFrame
+            A pandas DataFrame containing the features of the model
 
         y: pandas.core.series.Series
             A pandas series containing the targets/labels 
-
-        '''
+    '''
 
     X, y = load_airbnb()
 
@@ -82,20 +79,19 @@ def split_data(X, y):
 
         Parameters
         ----------
-        X: numpy.ndarray
-            A numpy array containing the features of the model
+        X: pandas.core.frame.DataFrame
+            A pandas DataFrame containing the features of the model
 
         y: pandas.core.series.Series
             A pandas series containing the targets/labels 
 
         Returns
         -------
-        X_train, X_validation, X_test: numpy.ndarray
-            A set of numpy arrays containing the features of the model
+        X_train, X_validation, X_test: pandas.core.frame.DataFrame
+            A set of pandas DataFrames containing the features of the model
 
         y_train, y_validation, y_test: pandas.core.series.Series
             A set of pandas series containing the targets/labels 
-
     '''
 
     np.random.seed(10)
@@ -107,6 +103,22 @@ def split_data(X, y):
 
 
 def obtain_metrics(y_pred, y):
+    '''
+        Computes the F1 Score, Precision, Recall and Accuracy based on predictions and labels
+
+        Parameters
+        ----------
+        y_pred: pandas.core.series.Series
+            A pandas DataFrame containing the predictions of the model
+
+        y: pandas.core.series.Series
+            A pandas series containing the targets/labels 
+
+        Returns
+        -------
+        train_metrics: dict
+            A dictionary containing the metrics based on predictions and labels
+    '''
 
     print("Metrics")
     print("F1 score:", f1_score(y, y_pred, average="macro"))
@@ -125,6 +137,24 @@ def obtain_metrics(y_pred, y):
 
 
 def classification_matrix(labels, predictions, clf):
+    '''
+        Creates a confusion matrix for a model, its labels and its predictions
+
+        Parameters
+        ----------
+        labels: pandas.core.series.Series
+            A pandas DataFrame containing the targets/labels 
+
+        predictions: pandas.core.series.Series
+            A pandas series containing the predictions of the model
+
+        clf: sklean.model
+            An instance of the sklearn classifier model
+
+        Returns
+        -------
+        None
+    '''
 
     cm = confusion_matrix(labels, predictions, labels=clf.classes_)
     display = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=clf.classes_)
@@ -134,6 +164,24 @@ def classification_matrix(labels, predictions, clf):
     return
 
 def normalised_classification_matrix(labels, predictions, clf):
+    '''
+        Creates a normalised confusion matrix for a model, its labels and its predictions
+
+        Parameters
+        ----------
+        labels: pandas.core.series.Series
+            A pandas DataFrame containing the targets/labels 
+
+        predictions: pandas.core.series.Series
+            A pandas series containing the predictions of the model
+
+        clf: sklean.model
+            An instance of the sklearn classifier model
+
+        Returns
+        -------
+        None
+    '''
 
     cm = confusion_matrix(labels, predictions, normalize='true', labels=clf.classes_)
     display = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=clf.classes_)
@@ -151,8 +199,8 @@ def tune_classification_model_hyperparameters(model, X_train, X_validation, X_te
         model: sklearn.model
             An instance of the sklearn model
         
-        X_train, X_validation, X_test: numpy.ndarray
-            A set of numpy arrays containing the features of the model
+        X_train, X_validation, X_test: pandas.core.frame.DataFrame
+            A set of pandas DataFrames containing the features of the model
 
         y_train, y_validation, y_test: pandas.core.series.Series
             A set of pandas series containing the targets/labels
@@ -187,17 +235,16 @@ def tune_classification_model_hyperparameters(model, X_train, X_validation, X_te
     if best_regression_model is None or best_metrics_dict[model] > best_metrics_dict[best_regression_model]:
         best_regression_model = model
         best_hyperparameters = best_hyperparameters_dict[model]
-
     
     model = best_regression_model.fit(X,y)
     best_regression_model = model
-    y_pred_validation = model.predict(X_validation)
+    y_pred_test = model.predict(X_test)
 
     best_metrics = {
-        "F1 score" : f1_score(y_validation, y_pred_validation, average="macro"),
-        "Precision":  precision_score(y_validation, y_pred_validation, average="macro"),
-        "Recall" :  recall_score(y_validation, y_pred_validation, average="macro"),
-        "Accuracy" :  accuracy_score(y_validation, y_pred_validation)
+        "F1 score" : f1_score(y_test, y_pred_test, average="macro"),
+        "Precision":  precision_score(y_test, y_pred_test, average="macro"),
+        "Recall" :  recall_score(y_test, y_pred_test, average="macro"),
+        "Accuracy" :  accuracy_score(y_test, y_pred_test)
     }
 
     return best_regression_model, best_hyperparameters, best_metrics
@@ -206,10 +253,8 @@ def metrics_and_classification_matrices(labels, predictions, fit_model):
 
     # Predict metrics using training and validation datasets
     obtain_metrics(predictions, labels)
-
     # Obtain Confusion Matrices
     classification_matrix(labels, predictions, fit_model)
-
     # Obtain Normalised Confusion Matrices
     normalised_classification_matrix(labels, predictions, fit_model)
   
@@ -217,7 +262,7 @@ def metrics_and_classification_matrices(labels, predictions, fit_model):
 
 def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
     '''
-        Creates a models folder, then within the models' folder creates a regression folder and finally creates a last folder-name folder where it stores the model, a dictionary of its hyperparameters and a dictionary of its metrics
+        Creates a models folder, then within the models' folder creates a classification folder and finally creates a last folder-name folder where it stores the model, a dictionary of its hyperparameters and a dictionary of its metrics
         
         Parameters
         ----------
@@ -235,8 +280,7 @@ def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
 
         Returns
         -------
-        None
-             
+        None         
     '''
 
     # Create Models folder
@@ -271,7 +315,6 @@ def save_model(folder_name, best_model, best_hyperparameters, best_metrics):
     with open(os.path.join(folder_name_path, 'metrics.json'), 'w') as fp:
             json.dump(best_metrics, fp)
 
-
     return
 
 def evaluate_all_models(models,hyperparameters_dict):
@@ -289,8 +332,7 @@ def evaluate_all_models(models,hyperparameters_dict):
 
         Returns
         -------
-        None
-             
+        None   
     '''
 
     # Import and standardize data
@@ -365,8 +407,6 @@ def find_best_model(models):
 
     return best_regression_model, best_hyperparameters_dict, best_metrics_dict
 
-
-
 hyperparameters_dict = [{ # LogisticRegression
 
     'C': [1.0],
@@ -383,7 +423,6 @@ hyperparameters_dict = [{ # LogisticRegression
     'tol': [0.0001],
     'verbose': [0],
     'warm_start': [True, False]
-
 },
                         { # DecisionTreeClassifier
     'ccp_alpha': [0.0],
@@ -398,7 +437,6 @@ hyperparameters_dict = [{ # LogisticRegression
     'min_weight_fraction_leaf': [0.0],
     'random_state': [None],
     'splitter': ['best', 'random']
-
 },
                         { # RandomForestClassifier
     'bootstrap': [True, False],
@@ -420,7 +458,6 @@ hyperparameters_dict = [{ # LogisticRegression
     'warm_start': [True, False]
 },
                         { # GradientBoostingClassifier
-
     'ccp_alpha': [0.0],
     'criterion': ['friedman_mse', 'squared_error'],
     'init': [None],
@@ -441,10 +478,7 @@ hyperparameters_dict = [{ # LogisticRegression
     'validation_fraction': [0.1],
     'verbose': [0],
     'warm_start': [True, False]
-}
-]
-
-
+}]
 
 if __name__ == "__main__":
 
@@ -458,10 +492,5 @@ if __name__ == "__main__":
     print(best_hyperparameters_dict)
     print("Metrics:")
     print(best_metrics_dict)
-
-    
-
-# %%
-
 
 # %%
