@@ -51,40 +51,61 @@ test_loader=DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
 # len(train_dataset), len(validation_dataset), len(test_dataset)
 
-# Linear Model
-class LinearRegression(torch.nn.Module):
+from torch.utils.tensorboard import SummaryWriter
+torch.manual_seed(10)
+
+# Neural Networks Model - Updated with more Layers
+class NeuralNetwork(torch.nn.Module):
 
     def __init__(self):
         super().__init__()
         # Initialise the Parameters
-        self.linear_layer = torch.nn.Linear(11,1) # 11 features, 1 label
+        self.layers = torch.nn.Sequential( # Update Model with more Layers
+        torch.nn.Linear(11, 20),
+        torch.nn.ReLU(),
+        torch.nn.Linear(20, 10),
+        torch.nn.ReLU(),
+        torch.nn.Linear(10, 1)
+        )
 
     def forward(self, features):
         # Use the layers to process the features
-        return self.linear_layer(features)
+        return self.layers(features)
 
-model = LinearRegression()
+model = NeuralNetwork()
+loss_fn = torch.nn.MSELoss()
 
-loss_fn = torch.nn.MSELoss() # This Loss function is better
+# Train function with Optimiser and Tensorboard
+def train(model, dataloader, epochs=30):
 
-# Train function with optimiser
-def train(model, dataloader, epochs=100):
+    optimiser = torch.optim.SGD(model.parameters(), lr=0.00001)
 
-    optimiser = torch.optim.SGD(model.parameters(), lr=0.0001)
+    writer = SummaryWriter()
 
     for epoch in range(epochs):
+        batch_idx = 0
+        current_loss = 0.0
         for batch in dataloader:
             features, labels = batch
             features = features.to(torch.float32) # Convert torch into the right format
             labels = labels.to(torch.float32) # Convert torch into the right format
             prediction = model(features)
-            loss = loss_fn(prediction, labels)
-            loss.backward() # What does this do? Populates the gradients?
+            loss = loss_fn(prediction,labels)
+            loss.backward() 
             optimiser.step() # Optimiser step
             optimiser.zero_grad()
-        print(loss.item())   
-    return
-
+            ls = loss.item()
+            print("Loss", ls)
+            batch_idx += 1
+            current_loss = current_loss + ls
+            writer.add_scalar("Loss",ls, epoch)
+        
+        # print (f"currentnt loss {current_loss} and batch index {batch_idx}")
+        # print(f'Loss after mini-batch  ({epoch + 1} : {current_loss // batch_idx}')
+        # writer.add_scalar('loss',current_loss / batch_idx , epoch)
+            
+        
 train(model,train_loader)
+
 # %%
 # %%
